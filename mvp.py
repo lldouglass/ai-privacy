@@ -63,7 +63,7 @@ if submitted:
     """
 
     with st.spinner("Generating compliance document..."):
-        response = openai.ChatCompletion.create(
+        response = openai.chat.completions.create(
             model="gpt-4-turbo",
             messages=[
                 {"role": "system", "content": "You are an AI compliance assistant creating documentation for the EU AI Act."},
@@ -71,7 +71,6 @@ if submitted:
             ],
             temperature=0.2,
         )
-
         documentation = response.choices[0].message.content
         st.subheader("Generated Compliance Documentation")
         st.markdown(documentation)
