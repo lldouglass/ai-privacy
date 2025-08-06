@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>AI Compliance Assistant</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h2>Quick EU AI Act Compliance Check</h2>
+
+<form id="form">
+  <label>AI System Name</label><br/>
+  <input id="name" required /><br/><br/>
+
+  <label>Intended Purpose</label><br/>
+  <textarea id="purpose" rows="3" required></textarea><br/><br/>
+
+  <label>High‑Level Use Case Category</label><br/>
+  <input id="usecase" placeholder="e.g. HR hiring" required /><br/><br/>
+
+  <button type="submit">Generate Compliance Report</button>
+</form>
+
+<h3>Result</h3>
+<pre id="output"></pre>
+
+<script src="script.js"></script>
+</body>
+</html>
