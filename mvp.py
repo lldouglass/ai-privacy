@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 import openai
 import os
 
-# Load API key from .env (recommended for Streamlit Cloud too)
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=api_key)
@@ -35,8 +34,23 @@ with st.form("compliance_form"):
 
     st.header("4. Compliance & Post-Market Plans")
     standards_used = st.text_area("Standards/Technical Specifications Followed")
-    conformity_declaration = st.text_area("EU Declaration of Conformity (if available)")
+    conformity_declaration = st.text_area("EU Declaration of Conformity")
     postmarket_monitoring = st.text_area("Post-Market Monitoring Plan")
+
+    st.header("5. Instructions for Use")
+    instructions_use = st.text_area("Instructions for System Use and Human Oversight")
+
+    st.header("6. Information on Data Sets")
+    dataset_info = st.text_area("Detailed Information on Data Sets (Training, Validation, Testing)")
+
+    st.header("7. Detailed Technical Documentation")
+    tech_doc_details = st.text_area("Algorithmic Parameters, Hyperparameters, and Model Specifics")
+
+    st.header("8. Record Keeping & Event Logging")
+    record_keeping = st.text_area("Methods for Logging Model Events, Changes, Audits, and Version Control")
+
+    st.header("9. Transparency and Information to Users")
+    transparency_info = st.text_area("Transparency Mechanisms and User Communication Methods")
 
     submitted = st.form_submit_button("Generate Documentation")
 
@@ -44,7 +58,7 @@ if submitted:
     with st.spinner("Generating compliance documentation..."):
 
         prompt = f"""
-You are an expert AI compliance assistant. Using ONLY the information below, generate a clear, structured, and professional EU AI Act technical documentation draft covering all Annex IV sections (1-9), using concise, factual language and labeling each section accordingly. If a section has no input, mark as "Not provided by user".
+You are an expert AI compliance assistant. Generate a structured, professional EU AI Act compliance technical documentation draft, strictly adhering to Annex IV sections numbered 1 to 9 below:
 
 1. General Description:
 - System Name: {system_name}
@@ -73,7 +87,22 @@ You are an expert AI compliance assistant. Using ONLY the information below, gen
 - EU Declaration of Conformity: {conformity_declaration}
 - Post-Market Monitoring Plan: {postmarket_monitoring}
 
-Format your output as a compliance-ready document for regulators.
+5. Instructions for Use:
+{instructions_use}
+
+6. Information on Data Sets:
+{dataset_info}
+
+7. Detailed Technical Documentation:
+{tech_doc_details}
+
+8. Record Keeping & Event Logging:
+{record_keeping}
+
+9. Transparency and Information to Users:
+{transparency_info}
+
+For any missing inputs, explicitly state 'Not provided by user'. Do not invent details. Use clear, concise, regulatory-compliant language suitable for EU AI Act documentation.
 """
 
         try:
