@@ -1,0 +1,67 @@
+system:
+  name: HireAI Resume Screener
+  version: 1.4.2
+  provider: FutureHire Technologies
+  delivery: cloud_api
+  regions:
+    - eu-central-1
+    - us-east-1
+
+model:
+  type: gradient_boosted_trees
+  framework: xgboost
+  objective: rank_candidates
+  features:
+    - bag_of_words_title
+    - years_experience
+    - skills_embedding
+    - education_level
+    - role_seniority
+  sensitive_features_removed:
+    - name
+    - gender
+    - photo
+    - address
+    - university_name
+  explainer: shap_tree_explainer
+
+data:
+  sources:
+    - name: applicant_cvs
+      type: text
+      pii: true
+      retention_days: 365
+    - name: ats_events
+      type: tabular
+      pii: possible
+      retention_days: 730
+  preprocessing:
+    pii_masking: true
+    deduplication: true
+    leakage_tests: true
+  labels:
+    target: hired
+    positives_ratio: 0.18
+
+validation:
+  methodology: kfold_5 + holdout_by_role
+  metrics:
+    auc_overall: 0.86
+    pr_auc_overall: 0.48
+    calibration_error: 0.04
+  fairness:
+    demographic_parity_gap: 0.06
+    tpr_gap: 0.05
+    fpr_gap: 0.03
+
+governance:
+  oversight:
+    manual_approval_required: true
+    escalation_owner: hr_legal
+  monitoring:
+    drift_threshold: 0.08
+    retrain_frequency_days: 60
+  security:
+    rbac: true
+    encryption_at_rest: true
+    encryption_in_transit: true
