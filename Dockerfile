@@ -1,39 +1,34 @@
-# ---------- Stage 1: Build the React frontend ----------
-FROM node:20-alpine AS fe
-WORKDIR /app/frontend
-
-# If you have lock file, copy it too (package-lock.json or pnpm-lock.yaml)
-COPY frontend/package*.json ./
-RUN npm ci
-
-# Copy the rest of the frontend and build
-COPY frontend ./
-RUN npm run build
-
-# ---------- Stage 2: Python FastAPI backend ----------
+# ===============================
+# Runtime image: FastAPI + prebuilt frontend
+# ===============================
 FROM python:3.11-slim
 
-# System deps for building wheels (optional but useful)
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+# (Optional) build tools for some Python wheels
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential curl && \
-    rm -rf /var/lib/apt/lists/*
+    build-essential \
+ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Backend deps
+# ---- Python deps ----
 COPY backend/requirements.txt ./backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
-# Copy backend code
+# ---- App code ----
 COPY backend ./backend
 
-# Copy built frontend into backend/static so FastAPI serves it
-COPY --from=fe /app/frontend/dist/ ./backend/static/
+# ---- Prebuilt frontend (built locally) ----
+# Make sure you've run `npm run build` in /frontend and committed /frontend/dist
+RUN mkdir -p backend/static
+COPY frontend/dist/ ./backend/static/
 
-# DigitalOcean passes PORT to your container. Default to 8080.
-ENV PORT=8080
+# Railway provides PORT automatically; default to 8000 for local runs
+ENV PORT=8000
+EXPOSE 8000
 
-# FastAPI will run from backend dir and bind to ${PORT}
 WORKDIR /app/backend
-EXPOSE 8080
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT}"]
