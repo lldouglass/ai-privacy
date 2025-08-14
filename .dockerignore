@@ -1,0 +1,18 @@
+# Node junk
+frontend/node_modules
+frontend/.vite
+frontend/.cache
+
+# Python junk
+**/__pycache__/
+**/*.pyc
+
+# Git & editor stuff
+.git
+.gitignore
+.vscode
+.DS_Store
+
+# If you ever keep local env files
+.env
+backend/.env
