@@ -347,8 +347,21 @@ async def startup():
         log.warning("OPENAI_API_KEY not set. /api/generate will return 503 if called.")
 
 # ── DB ────────────────────────────────────────────────────────────────────
+# ── DB ────────────────────────────────────────────────────────────────────
 DB_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
-engine = create_engine(DB_URL, echo=False)
+
+# Normalize Postgres URLs to use psycopg (v3) driver
+def _normalize_db_url(url: str) -> str:
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+psycopg://", 1)
+    if url.startswith("postgresql://") and "+psycopg" not in url:
+        return url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return url
+
+DB_URL = _normalize_db_url(DB_URL)
+
+engine = create_engine(DB_URL, echo=False, pool_pre_ping=True)
+
 
 class Project(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
