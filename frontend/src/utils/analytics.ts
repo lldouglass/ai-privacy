@@ -1,12 +1,14 @@
-// src/utils/analytics.ts
-import posthog from 'posthog-js';
+// Minimal analytics stub: no external deps.
+// Safe to ship without installing any packages.
+// If you later add the PostHog snippet to index.html, this will use it automatically.
 
-const key = import.meta.env.VITE_POSTHOG_KEY;
-if (key) {
-  posthog.init(key, { api_host: 'https://app.posthog.com' });
-}
+type Props = Record<string, any> | undefined;
 
-export function trackOutreachEvent(name: string, props?: Record<string, any>) {
-  if (!key) return;
-  posthog.capture(name, props || {});
+export function trackOutreachEvent(name: string, props?: Props) {
+  // If a global posthog snippet exists, use it; otherwise no-op.
+  const w = window as any;
+  const ph = w && w.posthog;
+  if (ph && typeof ph.capture === "function") {
+    ph.capture(name, props || {});
+  }
 }
