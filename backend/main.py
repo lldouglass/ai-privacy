@@ -296,6 +296,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException, UploadFile, Form, Request
+from .outreach import router as outreach_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -337,7 +338,14 @@ DEMO_SOURCES = json.loads((DEMO_DIR / "sample_sources.json").read_text(encoding=
 
 # ── FastAPI & CORS ────────────────────────────────────────────────────────
 app = FastAPI(title="AI Compliance Assistant", version="0.2.1")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://app.clarynt.net"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.include_router(outreach_router)
 
 @app.on_event("startup")
 async def startup():
