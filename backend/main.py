@@ -296,7 +296,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException, UploadFile, Form, Request
-from .outreach import router as outreach_router
+from outreach import router as outreach_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
