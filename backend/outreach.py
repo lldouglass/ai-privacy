@@ -1,4 +1,4 @@
-# app/outreach.py
+# backend/outreach.py
 # Drop-in outreach utilities for Clarynt
 # Endpoints:
 #   POST /api/outreach/invite           -> {invite_url}
@@ -21,7 +21,7 @@ engine = create_engine(DATABASE_URL, echo=False, connect_args=connect_args)
 
 APP_ORIGIN = os.getenv("APP_ORIGIN", "https://app.clarynt.net")
 SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
-ADMIN_KEY = os.getenv("ADMIN_KEY")  # random string you set in Render for admin-only endpoints
+ADMIN_KEY = os.getenv("ADMIN_KEY")  # set in Render → Environment
 
 router = APIRouter(prefix="/api/outreach", tags=["outreach"])
 
@@ -73,7 +73,7 @@ class InviteCreate(BaseModel):
 class ShareSampleCreate(BaseModel):
     days_valid: int = 30
     created_by_email: Optional[str] = None
-    sample_type: str = "hr"  # reserved for future use
+    sample_type: str = "hr"
 
 # ---------------------------------------------------------------------
 # Sample Annex IV payload (HR resume screener)
@@ -165,3 +165,7 @@ def get_shared_doc(token: str, session: Session = Depends(get_session)):
         "evidence": payload.get("evidence", []),
         "created_at": sh.created_at.isoformat() + "Z"
     }
+
+@router.get("/health")
+def health():
+    return {"ok": True, "service": "outreach"}
