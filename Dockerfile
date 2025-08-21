@@ -4,6 +4,8 @@ FROM python:3.11-slim
 # ---- OS build deps (small + enough)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    nodejs \
+    npm \
   && rm -rf /var/lib/apt/lists/*
 
 # ---- Workdir
@@ -19,10 +21,13 @@ RUN pip install --no-cache-dir psycopg2-binary==2.9.9
 
 # ---- App source
 COPY backend ./backend
+COPY frontend ./frontend
 
-# ---- Static bundle from Vite build
-RUN mkdir -p backend/static
-COPY frontend/dist/ ./backend/static/
+# ---- Build frontend and collect static files
+RUN rm -rf backend/static && mkdir -p backend/static && \
+    npm --prefix frontend ci && \
+    npm --prefix frontend run build && \
+    cp -r frontend/dist/* backend/static/
 
 # ---- Run from backend dir (Render start command calls uvicorn)
 WORKDIR /app/backend
