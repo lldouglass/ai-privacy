@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Clarynt Trust & Security</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.55;margin:0;color:#111}
+    header{background:#0b5cff;color:#fff;padding:24px 16px}
+    header h1{margin:0;font-size:24px}
+    main{max-width:940px;margin:0 auto;padding:24px 16px}
+    h2{margin-top:28px;font-size:20px}
+    .pill{display:inline-block;background:#eef4ff;color:#0b5cff;border-radius:999px;padding:4px 10px;margin-left:8px;font-size:12px}
+    .card{border:1px solid #eee;border-radius:8px;padding:16px;margin:16px 0;background:#fff}
+    ul{margin:8px 0 8px 20px}
+    code{background:#f6f8fa;padding:2px 6px;border-radius:4px}
+    .muted{color:#666}
+    footer{border-top:1px solid #eee;margin-top:24px;padding:16px;color:#666}
+    a{color:#0b5cff;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .kvs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:700px){.kvs{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <h1>Clarynt Trust & Security <span class="pill">Last updated: <!-- YYYY-MM-DD --> 2025-08-22</span></h1>
+  <div class="muted">How we handle data, security, and compliance for your EU‑AI‑Act journey.</div>
+</header>
+<main>
+
+  <div class="card">
+    <h2>Overview</h2>
+    <p>Clarynt helps teams prepare evidence and documentation for the EU AI Act. We are not a law firm and do not provide legal advice. We focus on secure handling of data and practical controls that reduce risk and speed up reviews.</p>
+  </div>
+
+  <div class="kvs">
+    <div class="card">
+      <h2>Data Handling</h2>
+      <ul>
+        <li><strong>Minimize first:</strong> We prefer <em>redacted or synthetic</em> inputs for pilots; no production access required.</li>
+        <li><strong>Scoped access:</strong> Read‑only where possible; least‑privilege service accounts.</li>
+        <li><strong>Export control:</strong> You approve the specific files we process. You can request deletion at any time (see below).</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Security Controls</h2>
+      <ul>
+        <li>Encryption in transit (TLS 1.2+) and at rest (provider‑managed KMS).</li>
+        <li>Access via SSO for internal accounts; MFA enforced.</li>
+        <li>Audit logging on administrative actions and data exports.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Sub‑processors</h2>
+      <p class="muted">Sub‑processors are service providers we use to operate Clarynt. We will update this list prior to changes.</p>
+      <ul>
+        <li><strong>Render</strong> – hosting & runtime (data center region per your service configuration).</li>
+        <li><strong>PostgreSQL</strong> (managed) – metadata storage (no raw customer content unless required by you).</li>
+        <li><strong>OpenAI/LLM provider</strong> (optional) – used only when enabled for specific features; otherwise disabled in pilot (<code>DEMO_MODE=1</code> meant calls were off).</li>
+        <!-- Add others you actually use: SendGrid (email), Cloudflare (CDN), Sentry (logs), etc. -->
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Data Location & Retention</h2>
+      <ul>
+        <li><strong>Location:</strong> Customer content is processed in the region configured for your service where possible.</li>
+        <li><strong>Retention:</strong> Pilot artifacts retained for 90 days unless you request earlier deletion.</li>
+        <li><strong>Deletion:</strong> Email <a href="mailto:security@clarynt.net">security@clarynt.net</a> to request deletion. We confirm within 5 business days.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Incidents & Vulnerabilities</h2>
+      <ul>
+        <li>Report security issues to <a href="mailto:security@clarynt.net">security@clarynt.net</a>. We acknowledge within 48 hours.</li>
+        <li>We patch critical dependencies promptly and review high‑risk alerts within 24 hours.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Compliance Notes</h2>
+    <ul>
+      <li>Clarynt helps generate documentation and evidence aligned to the EU AI Act and GDPR; your counsel decides final compliance posture.</li>
+      <li>DPA available on request. We support customer NDAs for pilots.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Contacts</h2>
+    <ul>
+      <li>Security/Privacy: <a href="mailto:security@clarynt.net">security@clarynt.net</a></li>
+      <li>General: <a href="mailto:logan42.ld@gmail.com">logan42.ld@gmail.com</a></li>
+    </ul>
+  </div>
+
+  <footer>
+    © Clarynt. This page will evolve as we add features and providers. For questions, reach out anytime.
+  </footer>
+</main>
+</body>
+</html>

@@ -294,7 +294,8 @@ import os, json, yaml, time, logging
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-
+from fastapi.responses import FileResponse
+from pathlib import Path
 from fastapi import FastAPI, HTTPException, UploadFile, Form, Request
 from outreach import router as outreach_router
 from fastapi.middleware.cors import CORSMiddleware
@@ -628,6 +629,12 @@ def delete_project(project_id: int, request: Request):
             raise HTTPException(404, "Not found")
         s.delete(obj); s.commit()
     return {"deleted": project_id}
+
+@api.get("/trust", include_in_schema=False)  # if your app is called `api`, use that. Otherwise `app`.
+def trust_page():
+    base_dir = Path(__file__).resolve().parent
+    trust_file = base_dir / "static" / "trust" / "index.html"
+    return FileResponse(str(trust_file), media_type="text/html")
 
 # Serve static only if built
 STATIC_DIR = Path(__file__).parent / "static"
