@@ -630,7 +630,7 @@ def delete_project(project_id: int, request: Request):
         s.delete(obj); s.commit()
     return {"deleted": project_id}
 
-@api.get("/trust", include_in_schema=False)  # if your app is called `api`, use that. Otherwise `app`.
+@app.get("/trust", include_in_schema=False)  # if your app is called `api`, use that. Otherwise `app`.
 def trust_page():
     base_dir = Path(__file__).resolve().parent
     trust_file = base_dir / "static" / "trust" / "index.html"
