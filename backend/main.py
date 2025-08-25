@@ -645,6 +645,10 @@ def trust_page():
     trust_file = base_dir / "static" / "trust" / "index.html"
     return FileResponse(str(trust_file), media_type="text/html")
 
+@app.get("/healthz", include_in_schema=False)
+def healthz():
+    return {"ok": True}
+
 # Serve static only if built
 STATIC_DIR = Path(__file__).parent / "static"
 if STATIC_DIR.exists():
