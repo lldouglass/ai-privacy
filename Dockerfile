@@ -1,51 +1,45 @@
-# ----------------------------
-# Stage 1: Build the frontend
-# ----------------------------
-FROM node:20-bullseye-slim AS webbuilder
-
-WORKDIR /app/frontend
-
-# Install deps first for better layer caching
+# ---------- Stage 1: build frontend ----------
+FROM node:20-alpine AS web
+WORKDIR /web
 COPY frontend/package*.json ./
-# If you use pnpm/yarn, copy the respective lockfile instead and adjust the install cmd
-RUN npm ci --no-audit --no-fund
-
-# Now copy the rest of the frontend and build it
-COPY frontend/ ./
+RUN npm ci
+COPY frontend/ .
 RUN npm run build
 
-# ----------------------------
-# Stage 2: Python backend
-# ----------------------------
+# ---------- Stage 2: backend + proxy ----------
 FROM python:3.11-slim
 
-# System deps (keep light; psycopg2-binary does not need libpq)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
- && rm -rf /var/lib/apt/lists/*
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PORT=10000
 
 WORKDIR /app
 
-# Install Python deps
+# System deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential nginx curl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+# Python deps
 COPY backend/requirements.txt ./backend/requirements.txt
-RUN pip install --no-cache-dir -r backend/requirements.txt
-RUN pip install --no-cache-dir psycopg2-binary==2.9.9
+RUN pip install --no-cache-dir -r backend/requirements.txt \
+    && pip install --no-cache-dir psycopg2-binary==2.9.9 streamlit python-dotenv openai
 
-# Copy backend source
+# App code
 COPY backend ./backend
+COPY mvp.py ./mvp.py
 
-# Copy the built frontend into the backend static dir
-COPY --from=webbuilder /app/frontend/dist ./backend/static
+# Frontend build into backend/static
+RUN mkdir -p backend/static
+COPY --from=web /web/dist/ ./backend/static/
 
-# Uvicorn runs from inside backend/
-WORKDIR /app/backend
+# Nginx + startup
+COPY ops/nginx.conf /etc/nginx/nginx.conf
+COPY ops/start.sh /start.sh
+RUN chmod +x /start.sh
 
-# Render sets PORT; default to 10000 if missing
-ENV PORT=10000
+# Expose Render port
 EXPOSE 10000
 
-# Allow overriding the app module via env if needed; defaults to main:app
-ENV UVICORN_APP=main:app
+CMD ["/start.sh"]
 
-# Start server
-CMD ["sh", "-c", "uvicorn ${UVICORN_APP} --host 0.0.0.0 --port ${PORT}"]

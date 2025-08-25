@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Clarynt Demo — EU‑AI‑Act Evidence</title>
+<style>
+  :root{--bg:#fff;--text:#111;--muted:#666;--primary:#0b5cff;--border:#eaeaea}
+  *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--text);background:var(--bg)}
+  .container{max-width:1060px;margin:0 auto;padding:0 16px}
+  .nav{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--border);z-index:50}
+  .nav-row{display:flex;align-items:center;justify-content:space-between;min-height:60px}
+  .brand{font-weight:700}
+  .nav-links{display:flex;gap:18px;align-items:center}
+  .nav-links a{text-decoration:none;color:var(--text)}
+  .btn{display:inline-block;border:1px solid var(--primary);padding:10px 14px;border-radius:8px;font-weight:600;text-decoration:none}
+  .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .hero{padding:32px 0;border-bottom:1px solid var(--border)}
+  .muted{color:var(--muted)}
+  .wrap{height:calc(100vh - 160px);margin:0}
+  iframe{width:100%;height:100%;border:0}
+  .footer{padding:20px 0;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-row">
+    <a class="brand" href="/">Clarynt</a>
+    <nav class="nav-links">
+      <a href="/#how">How it works</a>
+      <a href="/#evidence">Evidence pack</a>
+      <a href="/trust">Trust</a>
+      <a href="/demo">Demo</a>
+      <a class="btn btn-primary" href="/#cta">Book intro</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <h1>Interactive Demo</h1>
+    <p class="muted">Try the AI compliance assistant wizard. Uses redacted/synthetic inputs—no production access required.</p>
+  </div>
+</section>
+
+<div class="wrap">
+  <!-- IMPORTANT: src points to /demo/app/ which Nginx proxies to Streamlit -->
+  <iframe src="/demo/app/" title="Clarynt Demo"></iframe>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <small class="muted">© <script>document.write(new Date().getFullYear())</script> Clarynt</small>
+  </div>
+</footer>
+
+</body>
+</html>

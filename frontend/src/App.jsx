@@ -14,6 +14,7 @@ export default function App() {
             <a href="#how">How it works</a>
             <a href="#evidence">Evidence pack</a>
             <a href="/trust">Trust</a>
+            <a href="/demo">Demo</a>
             <a className="btn btn-primary" href="#cta">Book intro</a>
           </nav>
         </div>
@@ -84,7 +85,7 @@ export default function App() {
               <p className="muted">Free 3‑week pilot for SMB AI teams. NDA + no production access required.</p>
             </div>
             <div className="cta-actions">
-              {/* Replace with Calendly if/when you prefer */}
+              {/* Replace with Calendly when ready */}
               <a
                 className="btn btn-primary"
                 href="mailto:logan42.ld@gmail.com?subject=Clarynt%20pilot%20intro&body=We%27d%20like%20to%20book%20a%2025-min%20intro.%20Our%20company%20is%20..."
