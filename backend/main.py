@@ -308,6 +308,9 @@ from functools import lru_cache
 
 # OpenAI (used only when DEMO_MODE=0)
 from openai import OpenAI
+from fastapi.responses import FileResponse
+from pathlib import Path
+
 
 # Optional retrieval (skip when demo)
 try:
@@ -629,6 +632,12 @@ def delete_project(project_id: int, request: Request):
             raise HTTPException(404, "Not found")
         s.delete(obj); s.commit()
     return {"deleted": project_id}
+
+
+@app.get("/checkup", include_in_schema=False)
+def readiness_check():
+    base = Path(__file__).resolve().parent
+    return FileResponse(str(base / "static" / "checkup" / "index.html"), media_type="text/html")
 
 @app.get("/trust", include_in_schema=False)  # if your app is called `api`, use that. Otherwise `app`.
 def trust_page():

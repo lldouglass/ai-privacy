@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EU‑AI‑Act Readiness Check — Clarynt</title>
+<style>
+  :root{--primary:#0b5cff;--text:#111;--muted:#666;--border:#eaeaea;--radius:10px}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;color:var(--text)}
+  .container{max-width:860px;margin:0 auto;padding:20px}
+  h1{font-size:26px;margin:10px 0}
+  .card{border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin:12px 0;background:#fff}
+  .row{display:grid;grid-template-columns:1fr;gap:10px;margin:8px 0}
+  label{font-weight:600}
+  .muted{color:var(--muted)}
+  .btn{display:inline-block;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:10px 14px;cursor:pointer}
+  .btn:hover{filter:brightness(.95)}
+  .result{border:1px solid var(--border);padding:14px;border-radius:var(--radius);background:#fafcff}
+  .pill{display:inline-block;background:#eef4ff;color:#0b5cff;border-radius:999px;padding:2px 8px;font-size:12px;margin-left:6px}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Quick EU‑AI‑Act Readiness Check <span class="pill">3–5 minutes</span></h1>
+  <p class="muted">Answer six questions and get a score + 3 actions for this quarter. We don’t collect your answers unless you choose to email them to us.</p>
+
+  <form id="checkup" class="card">
+    <div class="row">
+      <label>1) Do you have a basic <strong>system inventory</strong> (systems, vendors, and retention)?</label>
+      <div>
+        <label><input type="radio" name="q1" value="yes" required> Yes</label>
+        <label><input type="radio" name="q1" value="no"> No</label>
+      </div>
+    </div>
+    <div class="row">
+      <label>2) Can you produce a simple <strong>model card</strong> describing purpose, data, and limits?</label>
+      <div>
+        <label><input type="radio" name="q2" value="yes" required> Yes</label>
+        <label><input type="radio" name="q2" value="no"> No</label>
+      </div>
+    </div>
+    <div class="row">
+      <label>3) Do you maintain minimal <strong>logs</strong> of prompts, outputs, and changes to models?</label>
+      <div>
+        <label><input type="radio" name="q3" value="yes" required> Yes</label>
+        <label><input type="radio" name="q3" value="no"> No</label>
+      </div>
+    </div>
+    <div class="row">
+      <label>4) Are <strong>data sources</strong> documented (training/eval) with licensing & provenance?</label>
+      <div>
+        <label><input type="radio" name="q4" value="yes" required> Yes</label>
+        <label><input type="radio" name="q4" value="no"> No</label>
+      </div>
+    </div>
+    <div class="row">
+      <label>5) Do you have at least a draft of <strong>user‑facing disclosures</strong> and a privacy notice update?</label>
+      <div>
+        <label><input type="radio" name="q5" value="yes" required> Yes</label>
+        <label><input type="radio" name="q5" value="no"> No</label>
+      </div>
+    </div>
+    <div class="row">
+      <label>6) Do you maintain a <strong>vendor/third‑party list</strong> with DPAs and sub‑processors?</label>
+      <div>
+        <label><input type="radio" name="q6" value="yes" required> Yes</label>
+        <label><input type="radio" name="q6" value="no"> No</label>
+      </div>
+    </div>
+
+    <div class="row">
+      <label>Optional: send results to your inbox</label>
+      <input type="email" id="email" placeholder="name@company.com" style="padding:10px;border:1px solid var(--border);border-radius:8px">
+    </div>
+
+    <button class="btn" type="submit">Get score</button>
+  </form>
+
+  <div id="out" class="result" style="display:none"></div>
+</div>
+
+<script>
+  function score(formData){
+    let s=0; for(const k of ['q1','q2','q3','q4','q5','q6']) if(formData.get(k)==='yes') s++;
+    return s;
+  }
+  function actions(s){
+    const items=[
+      'Create a 1‑page system & vendor inventory (we’ll share a template).',
+      'Draft a lightweight model card for your core model/agent.',
+      'Enable minimal prompt/output change logging (per feature/tool).',
+      'Capture data sources & licensing for training/eval datasets.',
+      'Add AI‑specific disclosures to your privacy notice.',
+      'List sub‑processors and link it from your Trust page.'
+    ];
+    // pick top 3 gaps
+    const gaps=[];
+    for(let i=1;i<=6;i++){ gaps.push({i, ok: document.querySelector(`input[name=q${i}]:checked`)?.value==='yes'}); }
+    const picks = gaps.filter(g=>!g.ok).slice(0,3).map(g=>items[g.i-1]);
+    return picks.length? picks : ['Nice work. We can review and tighten each item during a 25‑min intro.'];
+  }
+
+  document.getElementById('checkup').addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const s = score(fd);
+    const pct = Math.round((s/6)*100);
+    const list = actions(s).map(a=>`<li>${a}</li>`).join('');
+    const out = document.getElementById('out');
+    out.style.display='block';
+    out.innerHTML =
+      `<h3>Score: ${pct}%</h3>
+       <p>${ s<=2 ? 'Let’s get the basics in place.' : (s<=4 ? 'Good start—tighten a few items.' : 'Strong foundation—light polish left.') }</p>
+       <ul>${list}</ul>
+       <p class="muted">Want the templates? <a href="mailto:logan42.ld@gmail.com?subject=Send%20the%20EU‑AI‑Act%20templates&body=My%20score%20was%20${pct}%25.%20Please%20send%20the%20model%20card,%20data%20inventory,%20and%20logging%20checklist.">Email us</a> or <a href="mailto:security@clarynt.net">security@clarynt.net</a>.</p>`;
+    const email = (document.getElementById('email').value || '').trim();
+    if (email) {
+      // simple mailto with body (no backend needed)
+      const body = encodeURIComponent(`EU‑AI‑Act Readiness Check\nScore: ${pct}%\n\nAnswers:\n1:${fd.get('q1')}\n2:${fd.get('q2')}\n3:${fd.get('q3')}\n4:${fd.get('q4')}\n5:${fd.get('q5')}\n6:${fd.get('q6')}\n`);
+      window.location.href = `mailto:${email}?subject=Your%20Readiness%20Score&body=${body}`;
+    }
+    window.scrollTo({ top: out.offsetTop - 12, behavior: 'smooth' });
+  });
+</script>
+</body>
+</html>
