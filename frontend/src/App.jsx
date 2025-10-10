@@ -1,7 +1,12 @@
 import React from "react";
+import { Routes, Route, Link } from "react-router-dom";
 import "./styles.css";
+import SurveyPage from "./pages/SurveyPage.jsx";
+import HomePage from "./pages/HomePage.jsx";
+import DemoPage from "./pages/DemoPage.jsx";
+import SharePage from "./pages/SharePage.jsx";
 
-export default function App() {
+function MainLandingPage() {
   const year = new Date().getFullYear();
 
   return (
@@ -9,12 +14,12 @@ export default function App() {
       {/* Top nav */}
       <header className="nav">
         <div className="container nav-row">
-          <a className="brand" href="/">Clarynt</a>
+          <Link className="brand" to="/">Clarynt</Link>
           <nav className="nav-links">
             <a href="#how">How it works</a>
             <a href="#evidence">Evidence pack</a>
             <a href="/trust">Trust</a>
-            <a href="/demo">Demo</a>
+            <Link to="/demo">Demo</Link>
             <a className="btn btn-primary" href="#cta">Book intro</a>
           </nav>
         </div>
@@ -33,7 +38,7 @@ export default function App() {
               </p>
               <div className="cta-row">
                 <a className="btn btn-primary" href="/checkup">Run readiness check</a>
-                <a className="btn btn-ghost" href="/demo">See live demo</a>
+                <Link className="btn btn-ghost" to="/demo">See live demo</Link>
               </div>
               <ul className="trust-bullets">
                 <li>Built for SMB/Mid‑market AI vendors</li>
@@ -132,5 +137,17 @@ export default function App() {
         <div className="container tiny">© {year} Clarynt.</div>
       </footer>
     </>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<SurveyPage />} />
+      <Route path="/main" element={<MainLandingPage />} />
+      <Route path="/checkup" element={<HomePage />} />
+      <Route path="/demo" element={<DemoPage />} />
+      <Route path="/share/:shareId" element={<SharePage />} />
+    </Routes>
   );
 }
