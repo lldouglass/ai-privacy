@@ -8,24 +8,24 @@ const riskResults = {
     title: "Unacceptable Risk",
     color: "#ef4444",
     gradient: "linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1))",
-    description: "Your AI system falls under the Unacceptable Risk category according to EU AI Act Article 5.",
-    details: "Systems in this category are banned in the European Union.",
+    description: "Your AI system falls under the Unacceptable Risk category and may be prohibited under Colorado AI Act.",
+    details: "Systems in this category pose severe risks and are subject to the strictest regulations.",
     reason: "Your AI system is considered a clear threat to people's safety and fundamental rights."
   },
   highRiskA: {
     title: "High-Risk AI System",
     color: "#f59e0b",
     gradient: "linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1))",
-    description: "Your AI system is classified as High-Risk under EU AI Act Annex III.",
-    details: "High-risk AI systems are subject to strict requirements including risk management, data governance, technical documentation, record-keeping, transparency, human oversight, and accuracy standards. You must establish a quality management system and undergo conformity assessment before placing your system on the EU market.",
+    description: "Your AI system is classified as High-Risk under the Colorado AI Act.",
+    details: "High-risk AI systems are subject to strict requirements including impact assessments, risk management programs, data governance, technical documentation, transparency disclosures, human oversight, and ongoing monitoring. You must implement appropriate safeguards and notify the Colorado Attorney General before deploying your system.",
     reason: "Your system operates in a critical sector (healthcare, finance, etc.) and makes automated decisions affecting individuals."
   },
   highRiskB: {
     title: "High-Risk AI System",
     color: "#f59e0b",
     gradient: "linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1))",
-    description: "Your AI system is classified as High-Risk under EU AI Act Annex III.",
-    details: "You are subject to a comprehensive set of strict requirements, including: establishing a risk management system, ensuring high-quality data governance, creating detailed technical documentation, enabling human oversight, and undergoing a conformity assessment before placing the system on the market.",
+    description: "Your AI system is classified as High-Risk under the Colorado AI Act.",
+    details: "You are subject to a comprehensive set of strict requirements, including: establishing a risk management system, ensuring high-quality data governance, creating detailed technical documentation, enabling human oversight, and notifying the Colorado Attorney General before deployment.",
     reason: "Your system is used as a safety component in a regulated product."
   },
   limitedA: {
@@ -33,7 +33,7 @@ const riskResults = {
     color: "#3b82f6",
     gradient: "linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.1))",
     description: "Your AI system has a High-Risk Use Case with Potential Exemption",
-    details: "This is not a complete exemption. You are still required to formally document your assessment justifying why your system is not high-risk and register your system in the EU database before it is placed on the market.",
+    details: "This is not a complete exemption. You are still required to formally document your assessment justifying why your system is not high-risk and maintain appropriate safeguards under the Colorado AI Act.",
     reason: "While your AI system is used in a high-risk area, it may be exempt from the full set of high-risk obligations because it does not pose a significant risk of harm."
   },
   limitedB: {
@@ -56,8 +56,8 @@ const riskResults = {
     title: "Excluded from the Act",
     color: "#22c55e",
     gradient: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(21, 128, 61, 0.1))",
-    description: "Your AI system is likely excluded from the obligations of the EU AI Act.",
-    details: "Excluded AI systems are not subject to mandatory requirements under the EU AI Act.",
+    description: "Your AI system is likely excluded from the obligations of the Colorado AI Act.",
+    details: "Excluded AI systems are not subject to mandatory requirements under the Colorado AI Act.",
     reason: "Your AI system is used exclusively for military, personal non-professional, or scientific R&D purposes"
   },
   minimalB: {
@@ -65,7 +65,7 @@ const riskResults = {
     color: "#22c55e",
     gradient: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(21, 128, 61, 0.1))",
     description: "Your AI system is classified as a General Purpose AI.",
-    details: "You are subject to specific obligations, including creating technical documentation, complying with EU copyright law, and publishing a detailed summary of the content used to train your model.",
+    details: "You are subject to specific obligations, including creating technical documentation, complying with applicable copyright law, and publishing a detailed summary of the content used to train your model.",
     reason: "Your GPAI model is not powerful enough to require advanced documentation, but still requires submitting training content."
   },
   minimalC: {
@@ -73,7 +73,7 @@ const riskResults = {
     color: "#22c55e",
     gradient: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(21, 128, 61, 0.1))",
     description: "Your AI system is considered to pose minimal or no risk.",
-    details: "The EU AI Act imposes no specific legal obligations on your system. You are free to use it, though voluntary codes of conduct are encouraged.",
+    details: "The Colorado AI Act imposes no specific legal obligations on your system. You are free to use it, though voluntary best practices are encouraged.",
     reason: "Your AI system is used for non-high-risk purposes."
   }
 };
@@ -107,7 +107,7 @@ const surveyQuestions = [
   },
   {
     id: 'q3',
-    question: 'Is your AI system a safety component of, or is it itself, a product that falls under specific EU safety laws? Think of things like:',
+    question: 'Is your AI system a safety component of, or is it itself, a product that falls under specific safety regulations? Think of things like:',
     options: [
       { label: 'Medical devices', value: 'medical_devices', nextQuestion: 'q4' },
       { label: 'Machinery', value: 'machinery', nextQuestion: 'q4' },
@@ -121,7 +121,7 @@ const surveyQuestions = [
   },
   {
     id: 'q4',
-    question: 'Does the product you selected legally require a safety check (a "third-party conformity assessment") by an authorized body before it can be sold in the EU?',
+    question: 'Does the product you selected legally require a safety check (a "third-party conformity assessment") by an authorized body before it can be sold?',
     options: [
       { label: 'Yes', value: 'yes', nextQuestion: 'highRiskB' },
       { label: 'No', value: 'no', nextQuestion: 'q5' }
@@ -506,7 +506,7 @@ export default function SurveyPage() {
           marginBottom: '0.5rem',
           textAlign: 'center'
         }}>
-          EU AI Compliance Survey
+          Colorado AI Compliance Survey
         </h1>
         <p style={{
           fontSize: '1rem',
