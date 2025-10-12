@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>EU‑AI‑Act Readiness Check — Clarynt</title>
+<title>Colorado AI Act Readiness Check — Clarynt</title>
 <style>
   :root{--primary:#0b5cff;--text:#111;--muted:#666;--border:#eaeaea;--radius:10px}
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;color:var(--text)}
@@ -21,47 +21,47 @@
 </head>
 <body>
 <div class="container">
-  <h1>Quick EU‑AI‑Act Readiness Check <span class="pill">3–5 minutes</span></h1>
-  <p class="muted">Answer six questions and get a score + 3 actions for this quarter. We don’t collect your answers unless you choose to email them to us.</p>
+  <h1>Quick Colorado AI Act Readiness Check <span class="pill">3–5 minutes</span></h1>
+  <p class="muted">Answer six questions and get a score + 3 actions for this quarter. We don't collect your answers unless you choose to email them to us.</p>
 
   <form id="checkup" class="card">
     <div class="row">
-      <label>1) Do you have a basic <strong>system inventory</strong> (systems, vendors, and retention)?</label>
+      <label>1) Have you classified your AI systems to determine if they are <strong>high-risk</strong> under CAIA (make consequential decisions)?</label>
       <div>
         <label><input type="radio" name="q1" value="yes" required> Yes</label>
         <label><input type="radio" name="q1" value="no"> No</label>
       </div>
     </div>
     <div class="row">
-      <label>2) Can you produce a simple <strong>model card</strong> describing purpose, data, and limits?</label>
+      <label>2) Do you have an <strong>impact assessment</strong> documenting purpose, risks of algorithmic discrimination, and mitigations?</label>
       <div>
         <label><input type="radio" name="q2" value="yes" required> Yes</label>
         <label><input type="radio" name="q2" value="no"> No</label>
       </div>
     </div>
     <div class="row">
-      <label>3) Do you maintain minimal <strong>logs</strong> of prompts, outputs, and changes to models?</label>
+      <label>3) Have you established a <strong>risk management program</strong> with policies for identifying and mitigating algorithmic discrimination?</label>
       <div>
         <label><input type="radio" name="q3" value="yes" required> Yes</label>
         <label><input type="radio" name="q3" value="no"> No</label>
       </div>
     </div>
     <div class="row">
-      <label>4) Are <strong>data sources</strong> documented (training/eval) with licensing & provenance?</label>
+      <label>4) Do you conduct <strong>testing and validation</strong> for algorithmic discrimination across protected classes?</label>
       <div>
         <label><input type="radio" name="q4" value="yes" required> Yes</label>
         <label><input type="radio" name="q4" value="no"> No</label>
       </div>
     </div>
     <div class="row">
-      <label>5) Do you have at least a draft of <strong>user‑facing disclosures</strong> and a privacy notice update?</label>
+      <label>5) Do you provide required <strong>consumer disclosures</strong> and support consumer rights (appeals, corrections)?</label>
       <div>
         <label><input type="radio" name="q5" value="yes" required> Yes</label>
         <label><input type="radio" name="q5" value="no"> No</label>
       </div>
     </div>
     <div class="row">
-      <label>6) Do you maintain a <strong>vendor/third‑party list</strong> with DPAs and sub‑processors?</label>
+      <label>6) Do you maintain <strong>documentation</strong> that can be provided to the Colorado Attorney General within 90 days if requested?</label>
       <div>
         <label><input type="radio" name="q6" value="yes" required> Yes</label>
         <label><input type="radio" name="q6" value="no"> No</label>
@@ -86,12 +86,12 @@
   }
   function actions(s){
     const items=[
-      'Create a 1‑page system & vendor inventory (we’ll share a template).',
-      'Draft a lightweight model card for your core model/agent.',
-      'Enable minimal prompt/output change logging (per feature/tool).',
-      'Capture data sources & licensing for training/eval datasets.',
-      'Add AI‑specific disclosures to your privacy notice.',
-      'List sub‑processors and link it from your Trust page.'
+      'Complete high-risk classification analysis for your AI systems (we'll share a template).',
+      'Draft an impact assessment documenting algorithmic discrimination risks and mitigations.',
+      'Establish a risk management program with testing procedures for fairness across protected classes.',
+      'Conduct validation testing and document performance metrics by demographic group.',
+      'Implement consumer disclosure mechanisms and appeals process for adverse decisions.',
+      'Organize technical documentation for potential Attorney General review (90-day response).'
     ];
     // pick top 3 gaps
     const gaps=[];
@@ -112,11 +112,11 @@
       `<h3>Score: ${pct}%</h3>
        <p>${ s<=2 ? 'Let’s get the basics in place.' : (s<=4 ? 'Good start—tighten a few items.' : 'Strong foundation—light polish left.') }</p>
        <ul>${list}</ul>
-       <p class="muted">Want the templates? <a href="mailto:logan42.ld@gmail.com?subject=Send%20the%20EU‑AI‑Act%20templates&body=My%20score%20was%20${pct}%25.%20Please%20send%20the%20model%20card,%20data%20inventory,%20and%20logging%20checklist.">Email us</a> or <a href="mailto:security@clarynt.net">security@clarynt.net</a>.</p>`;
+       <p class="muted">Want the templates? <a href="mailto:logan42.ld@gmail.com?subject=Send%20the%20Colorado%20AI%20Act%20templates&body=My%20score%20was%20${pct}%25.%20Please%20send%20the%20impact%20assessment,%20risk%20management,%20and%20documentation%20templates.">Email us</a> or <a href="mailto:security@clarynt.net">security@clarynt.net</a>.</p>`;
     const email = (document.getElementById('email').value || '').trim();
     if (email) {
       // simple mailto with body (no backend needed)
-      const body = encodeURIComponent(`EU‑AI‑Act Readiness Check\nScore: ${pct}%\n\nAnswers:\n1:${fd.get('q1')}\n2:${fd.get('q2')}\n3:${fd.get('q3')}\n4:${fd.get('q4')}\n5:${fd.get('q5')}\n6:${fd.get('q6')}\n`);
+      const body = encodeURIComponent(`Colorado AI Act Readiness Check\nScore: ${pct}%\n\nAnswers:\n1:${fd.get('q1')}\n2:${fd.get('q2')}\n3:${fd.get('q3')}\n4:${fd.get('q4')}\n5:${fd.get('q5')}\n6:${fd.get('q6')}\n`);
       window.location.href = `mailto:${email}?subject=Your%20Readiness%20Score&body=${body}`;
     }
     window.scrollTo({ top: out.offsetTop - 12, behavior: 'smooth' });

@@ -14,16 +14,16 @@ const INVITE = import.meta.env.VITE_INVITE_TOKEN || null;
 
 // ------- Completeness helpers -------
 const SECTION_TITLES = [
-  "0. Risk Classification (Guess)",
-  "1. General Description",
-  "2. Design, Development & Validation",
-  "3. Data & Data Governance",
-  "4. Risk Management System",
-  "5. Human Oversight",
-  "6. Technical Robustness & Cybersecurity",
-  "7. Transparency & Information to Users",
-  "8. Post‑Market Monitoring & Reporting",
-  "9. Conformity Assessment & Record‑Keeping",
+  "0. High-Risk Classification Determination",
+  "1. General Description & Intended Use",
+  "2. Impact Assessment",
+  "3. Risk Management Program",
+  "4. Data Governance & Sources",
+  "5. Human Oversight & Review",
+  "6. Testing, Validation & Performance Metrics",
+  "7. Consumer Disclosures & Rights",
+  "8. Post‑Deployment Monitoring",
+  "9. Documentation & Record‑Keeping",
   "Action Items (Missing Info)",
 ];
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

@@ -54,7 +54,7 @@ class ShareDoc(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     token_hash: str
     title: str
-    payload_json: str  # JSON string of the rendered Annex IV doc
+    payload_json: str  # JSON string of the rendered CAIA compliance doc
     created_at: datetime = Field(default_factory=datetime.utcnow)
     expires_at: Optional[datetime] = None
     created_by_email: Optional[str] = None
@@ -76,26 +76,26 @@ class ShareSampleCreate(BaseModel):
     sample_type: str = "hr"
 
 # ---------------------------------------------------------------------
-# Sample Annex IV payload (HR resume screener)
+# Sample CAIA compliance payload (HR resume screener)
 # ---------------------------------------------------------------------
-SAMPLE_ANNEX_IV: Dict[str, Any] = {
+SAMPLE_CAIA_DOC: Dict[str, Any] = {
     "model_name": "Clarynt HR Resume Screening (Demo)",
     "version": "1.0.0-demo",
     "generated_at": datetime.utcnow().isoformat() + "Z",
     "intended_purpose": (
         "Assist recruiters by prioritizing applicant resumes for screening in entry-level "
-        "engineering roles within the EU. The system surfaces candidates to human reviewers; "
+        "engineering roles. The system surfaces candidates to human reviewers; "
         "final decisions remain with recruiting staff."
     ),
-    "deployment_context": "Used by an EU-based SaaS SMB across Germany, Sweden, and the Netherlands.",
+    "deployment_context": "Used by Colorado-based company for hiring decisions affecting employment opportunities.",
     "data_sources": (
         "Historical resumes and recruiter dispositions from 2019–2024; public job descriptions; "
         "PII minimized and anonymized where possible; class imbalance addressed with stratified sampling."
     ),
     "risk_management": (
-        "Key risks: indirect bias, data drift, spurious correlations, automation bias. "
-        "Mitigations: bias evals by gender proxy and region, calibrated thresholds, human-in-the-loop, "
-        "periodic fairness audits, incident response runbook."
+        "Key risks: algorithmic discrimination via indirect bias, data drift, spurious correlations, automation bias. "
+        "Mitigations: fairness testing across protected classes, calibrated thresholds, mandatory human oversight, "
+        "quarterly fairness audits, duty of care procedures aligned with CAIA."
     ),
     "human_oversight": (
         "Recruiters must review all recommendations; override tools and an appeal path exist. "
@@ -140,8 +140,8 @@ def share_sample(body: ShareSampleCreate, admin_ok: bool = Depends(require_admin
     token = secrets.token_urlsafe(24)
     sh = ShareDoc(
         token_hash=_hash(token),
-        title="EU AI Act Annex IV — HR Screening (Sample)",
-        payload_json=json.dumps(SAMPLE_ANNEX_IV),
+        title="Colorado AI Act Compliance — HR Screening (Sample)",
+        payload_json=json.dumps(SAMPLE_CAIA_DOC),
         expires_at=datetime.utcnow() + timedelta(days=body.days_valid),
         created_by_email=body.created_by_email
     )

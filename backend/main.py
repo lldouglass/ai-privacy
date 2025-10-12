@@ -45,7 +45,7 @@ def get_openai_client():
 
 # Demo assets
 DEMO_DIR = Path(__file__).parent / "demo"
-DEMO_MD = (DEMO_DIR / "sample_annex_iv.md").read_text(encoding="utf-8") if DEMO_DIR.exists() else ""
+DEMO_MD = (DEMO_DIR / "sample_caia_doc.md").read_text(encoding="utf-8") if DEMO_DIR.exists() else ""
 DEMO_SOURCES = json.loads((DEMO_DIR / "sample_sources.json").read_text(encoding="utf-8")) if DEMO_DIR.exists() else []
 
 # ── FastAPI & CORS ────────────────────────────────────────────────────────
@@ -150,7 +150,7 @@ def _meta_block(model_meta: str) -> str:
 
 # ── Core report generation ────────────────────────────────────────────────
 def _make_report(data: QuickInput, model_meta: str, skip_store: bool):
-    # DEMO fast‑path: canned Annex IV + injected metadata
+    # DEMO fast‑path: canned CAIA compliance doc + injected metadata
     if DEMO_MODE:
         report_md = DEMO_MD.replace("{{MODEL_META_BLOCK}}", _meta_block(model_meta))
         sources = DEMO_SOURCES
@@ -190,8 +190,8 @@ def _make_report(data: QuickInput, model_meta: str, skip_store: bool):
             log.warning(f"Retrieval failed; continuing without context: {e}")
 
     prompt = f"""
-You are an EU AI Act compliance analyst. Using ONLY the regulatory excerpts below for citations, draft a
-structured Annex IV Technical Documentation for the described AI system. Use [S#] inline citations only where supported.
+You are a Colorado AI Act (CAIA) compliance analyst. Using ONLY the regulatory excerpts below for citations, draft a
+structured CAIA Compliance Documentation for the described AI system. Use [S#] inline citations only where supported.
 
 REGULATORY EXCERPTS:
 {regulatory_context or '<<no retrieval in this mode>>'}
@@ -254,14 +254,14 @@ def demo_config():
     return {
         "system_name": "HireAI Resume Screener",
         "intended_purpose": "Screen and rank job applicants based on predicted job fit for a given role.",
-        "use_case": "HR hiring (recruitment & selection)",
+        "use_case": "Employment (recruitment & selection)",
         "risk_notes": (
-            "- Risk of indirect discrimination via correlated features (education, employment gaps)\n"
-            "- Automation bias among recruiters; over‑reliance on score\n"
+            "- Risk of algorithmic discrimination via correlated features (education, employment gaps)\n"
+            "- Automation bias among recruiters; over‑reliance on AI-generated scores\n"
             "- Drift across geographies/roles; calibration degradation\n"
-            "- PII leakage in features; explanation text revealing sensitive info\n"
+            "- PII handling concerns; explanation text may reveal sensitive attributes\n"
         ),
-        "free_text_notes": "Model: gradient‑boosted trees; PII masking + fairness checks; human approval required.",
+        "free_text_notes": "Model: gradient‑boosted trees; PII masking + fairness checks; human review required per CAIA.",
         "ephemeral": False
     }
 

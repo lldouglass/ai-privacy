@@ -3,10 +3,10 @@ import { Paper, Box, Typography, List, ListItem, ListItemText } from "@mui/mater
 export default function RightPanel() {
   return (
     <Paper sx={{ p: 2 }}>
-      <Typography variant="h6" sx={{ mb: 1 }}>What you’ll get</Typography>
+      <Typography variant="h6" sx={{ mb: 1 }}>What you'll get</Typography>
       <List dense>
-        <ListItem><ListItemText primary="Annex IV‑style documentation" secondary="Structured sections for counsel/auditors." /></ListItem>
-        <ListItem><ListItemText primary="Inline citations" secondary="Each obligation references the EU AI Act." /></ListItem>
+        <ListItem><ListItemText primary="CAIA-compliant documentation" secondary="Structured impact assessment and risk management program." /></ListItem>
+        <ListItem><ListItemText primary="Inline citations" secondary="Each obligation references the Colorado AI Act." /></ListItem>
         <ListItem><ListItemText primary="Actionable gaps" secondary="Action items to gather missing evidence." /></ListItem>
         <ListItem><ListItemText primary="Download & share" secondary="Copy link or export PDF." /></ListItem>
       </List>

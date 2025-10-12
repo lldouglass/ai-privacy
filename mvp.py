@@ -107,7 +107,7 @@ EXAMPLES = {
         "fallback to agent after 2 low‑confidence turns; weekly error review."
     ),
     "standards_used": (
-        "Mapped to GDPR (lawful basis: legitimate interests for support, with opt‑out), "
+        "Mapped to Colorado Privacy Act (lawful basis: legitimate interests for support, with opt‑out), "
         "NIST AI RMF (govern/map/measure/manage), and ISO/IEC 27001 inherited controls. "
         "Vendor DPA signed; DPIA performed and updated quarterly."
     ),
@@ -228,9 +228,9 @@ else:
         )
 
         doc_prompt = f"""
-        Create a professional EU AI Act compliance report from the details below.
+        Create a professional Colorado AI Act compliance report from the details below.
         - Synthesize; avoid verbatim repetition.
-        - Map details to EU AI Act obligations and GDPR where relevant.
+        - Map details to Colorado AI Act requirements where relevant.
         - List missing items as 'Action items'.
 
         General Info
@@ -251,7 +251,7 @@ else:
         Post-Market: {r.get('postmarket_monitoring','')}
         """
         documentation = safe_chat(
-            "You are a compliance analyst creating robust EU AI Act documentation.",
+            "You are a compliance analyst creating robust Colorado AI Act documentation.",
             doc_prompt,
             temperature=0.2,
         )
