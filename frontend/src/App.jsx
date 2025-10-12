@@ -37,7 +37,7 @@ function MainLandingPage() {
                 using <strong>redacted or synthetic data</strong> (no production access required).
               </p>
               <div className="cta-row">
-                <a className="btn btn-primary" href="/checkup">Run readiness check</a>
+                <Link className="btn btn-primary" to="/survey">Run readiness check</Link>
                 <Link className="btn btn-ghost" to="/demo">See live demo</Link>
               </div>
               <ul className="trust-bullets">
@@ -115,7 +115,7 @@ function MainLandingPage() {
               >
                 Book intro
               </a>
-              <a className="btn btn-ghost" href="/checkup">Run readiness check</a>
+              <Link className="btn btn-ghost" to="/survey">Run readiness check</Link>
             </div>
           </div>
         </section>
@@ -143,8 +143,8 @@ function MainLandingPage() {
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<SurveyPage />} />
-      <Route path="/main" element={<MainLandingPage />} />
+      <Route path="/" element={<MainLandingPage />} />
+      <Route path="/survey" element={<SurveyPage />} />
       <Route path="/checkup" element={<HomePage />} />
       <Route path="/demo" element={<DemoPage />} />
       <Route path="/share/:shareId" element={<SharePage />} />

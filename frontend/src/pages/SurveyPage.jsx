@@ -82,7 +82,7 @@ const riskResults = {
 const surveyQuestions = [
   {
     id: 'q1',
-    question: 'Is your AI system used exclusively for any of the following purposes?',
+    question: 'Does your organization conduct business in the state of Colorado, such as offering products or services to Colorado residents? ',
     options: [
       { label: 'Military or defense.', value: 'military/defense', nextQuestion: 'minimalA' },
       { label: 'Purely personal, non-professional activities (e.g., a personal hobby project).', value: 'personal', nextQuestion: 'minimalA' },
@@ -380,6 +380,36 @@ export default function SurveyPage() {
               }}
             >
               Generate Documentation →
+            </button>
+
+            <button
+              onClick={() => navigate('/demo')}
+              style={{
+                flex: '1',
+                minWidth: '200px',
+                padding: '1rem 2rem',
+                background: 'transparent',
+                border: '1px solid var(--primary)',
+                borderRadius: '10px',
+                color: 'var(--text)',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                fontFamily: 'inherit'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--primary)';
+                e.currentTarget.style.color = '#fff';
+                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--primary)';
+                e.currentTarget.style.color = 'var(--text)';
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              See live demo
             </button>
 
             <button
