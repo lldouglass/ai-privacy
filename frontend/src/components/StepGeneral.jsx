@@ -1,4 +1,4 @@
-import { TextField, Button, FormControlLabel, Switch } from "@mui/material";
+import { TextField, Button, FormControlLabel, Switch, Box } from "@mui/material";
 import { useState } from "react";
 
 export default function StepGeneral(props) {
@@ -63,16 +63,17 @@ export default function StepGeneral(props) {
         label="Don't store this run (ephemeral)"
       />
 
-      <Button
-        variant="contained"
-        sx={{ mt: 2 }}
-        onClick={() => {
-          setTouched(true);
-          if (!hasErrors) next();
-        }}
-      >
-        Next
-      </Button>
+      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+        <Button
+          variant="contained"
+          onClick={() => {
+            setTouched(true);
+            if (!hasErrors) next();
+          }}
+        >
+          Next &gt;
+        </Button>
+      </Box>
     </>
   );
 }

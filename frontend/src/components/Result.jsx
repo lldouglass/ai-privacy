@@ -218,8 +218,8 @@ export default function Result({ data, back }) {
             <Sources sources={sources} />
           </div>
 
-          <Stack direction="row" spacing={2} sx={{ mt: 2 }} alignItems="center">
-            <Button onClick={back}>Back</Button>
+          <Stack direction="row" spacing={2} sx={{ mt: 3 }} alignItems="center" flexWrap="wrap">
+            <Button onClick={back} variant="outlined">&lt; Back</Button>
             {shareUrl && (
               <>
                 <Tooltip title="Copy share link"><IconButton color="primary" onClick={copyShare}><ContentCopyIcon /></IconButton></Tooltip>

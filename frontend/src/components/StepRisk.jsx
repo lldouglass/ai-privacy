@@ -18,9 +18,9 @@ export default function StepRisk(props) {
         onChange={(e) => setData({ ...data, risk_notes: e.target.value })}
         disabled={disabled}
       />
-      <Box sx={{ mt: 3 }}>
-        <Button onClick={back} sx={{ mr: 2 }}>
-          Back
+      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
+        <Button onClick={back} variant="outlined">
+          &lt; Back
         </Button>
         <Button variant="contained" onClick={next}>
           Generate Report

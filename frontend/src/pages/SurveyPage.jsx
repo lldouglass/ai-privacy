@@ -4,77 +4,77 @@ import "../styles.css";
 
 // Result configurations for different risk outcomes
 const riskResults = {
-  unacceptableA: {
-    title: "Unacceptable Risk",
+  outcome1: {
+    title: "Not Subject to the Colorado AI Act",
     color: "#ef4444",
     gradient: "linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1))",
-    description: "Your AI system falls under the Unacceptable Risk category and may be prohibited under Colorado AI Act.",
-    details: "Systems in this category pose severe risks and are subject to the strictest regulations.",
-    reason: "Your AI system is considered a clear threat to people's safety and fundamental rights."
+    description: "Your organization is likely not subject to this act.",
+    details: "The Colorado AI Act applies to persons or entities \"doing business in this state.\"  If your organization has no business nexus with Colorado, the Act's requirements do not apply.",
+    reason: "The Act's jurisdiction is established by the \"doing business in Colorado\" clause. Without this, there are no compliance obligations."
   },
-  highRiskA: {
-    title: "High-Risk AI System",
+  outcome2: {
+    title: "Exempt Deployer",
     color: "#f59e0b",
     gradient: "linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1))",
-    description: "Your AI system is classified as High-Risk under the Colorado AI Act.",
-    details: "High-risk AI systems are subject to strict requirements including impact assessments, risk management programs, data governance, technical documentation, transparency disclosures, human oversight, and ongoing monitoring. You must implement appropriate safeguards and notify the Colorado Attorney General before deploying your system.",
-    reason: "Your system operates in a critical sector (healthcare, finance, etc.) and makes automated decisions affecting individuals."
+    description: "You are a small business deployer with reduced obligations.",
+    details: "You are exempt from some of the Act's more burdensome requirements, such as the notice to consumers.  However, you must still use reasonable care to protect consumers from algorithmic discrimination and make impact assessment information available to them.",
+    reason: "The Act provides a narrow exemption for deployers that meet four specific criteria related to size, data usage, and adherence to developer guidelines, aiming to reduce the compliance burden on small businesses."
   },
-  highRiskB: {
-    title: "High-Risk AI System",
+  outcome3: {
+    title: "Not an AI System Under CAIA",
     color: "#f59e0b",
     gradient: "linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1))",
-    description: "Your AI system is classified as High-Risk under the Colorado AI Act.",
-    details: "You are subject to a comprehensive set of strict requirements, including: establishing a risk management system, ensuring high-quality data governance, creating detailed technical documentation, enabling human oversight, and notifying the Colorado Attorney General before deployment.",
-    reason: "Your system is used as a safety component in a regulated product."
+    description: "Your technology does not meet the Act's definition.",
+    details: "Your system is not subject to the requirements of the Colorado AI Act.",
+    reason: "The Act defines an AI system as one that infers from inputs to generate outputs that influence environments.  If your technology does not perform this core function, it falls outside the scope of the legislation."
   },
-  limitedA: {
-    title: "Potential Exemption from High-Risk",
+ outcome4: {
+    title: "Not a Developer Under CAIA",
     color: "#3b82f6",
     gradient: "linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.1))",
-    description: "Your AI system has a High-Risk Use Case with Potential Exemption",
-    details: "This is not a complete exemption. You are still required to formally document your assessment justifying why your system is not high-risk and maintain appropriate safeguards under the Colorado AI Act.",
-    reason: "While your AI system is used in a high-risk area, it may be exempt from the full set of high-risk obligations because it does not pose a significant risk of harm."
+    description: "Your role does not meet the Act's definition.",
+    details: "You are not subject to the specific obligations for Developers under the Act. If you use a high-risk AI system, you may still have obligations as a Deployer.",
+    reason: "A \"Developer\" is defined as an entity that either creates an AI system or \"intentionally and substantially modifies\" one, creating a new risk of discrimination.  Simply using a system without modifying it in this way does not make you a Developer."
   },
-  limitedB: {
-    title: "General-Purpose AI with Systemic Risk",
+  outcome5: {
+    title: "General AI System with Disclosure Duty",
     color: "#3b82f6",
     gradient: "linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.1))",
-    description: "Your AI system is considered a systemic risk.",
-    details: "You must comply with all standard GPAI obligations plus additional stringent requirements, such as conducting advanced model evaluations, assessing and mitigating systemic risks, tracking serious incidents, and ensuring robust cybersecurity.",
-    reason: "Your GPAI model is powerful enough to require sufficient documentation."
+    description: "Your system requires a basic consumer disclosure.",
+    details: "You must disclose to any consumer interacting with the AI system that they are, in fact, interacting with an AI system. This is not required if it would be obvious to a reasonable person.",
+    reason: "The Act includes a broad transparency rule that applies to all consumer-facing AI, not just high-risk systems, to ensure consumers are aware of the nature of their interaction."
   },
-  limitedC: {
-    title: "Limited Risk",
+  outcome6: {
+    title: "Not a Regulated System",
     color: "#22c55e",
     gradient: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(21, 128, 61, 0.1))",
-    description: "Your AI system poses a limited risk, primarily related to transparency.",
-    details: "You must ensure users are aware they are interacting with an AI system or viewing AI-generated content. For example, chatbots must disclose they are not human, and \"deepfake\" content must be labeled as manipulated.",
-    reason: "Your AI system directly interacts with humans or generates content that could appear authentic."
+    description: "Your AI system is not currently regulated by CAIA.",
+    details: "Your AI system is not considered \"high-risk\" and is not consumer-facing, so it is not subject to the Act's primary obligations or its general disclosure rule.",
+    reason: "The Act focuses its most stringent requirements on \"high-risk\" systems used for consequential decisions.  It also has a general disclosure rule for consumer-facing AI.  Systems that are neither high-risk nor consumer-facing fall outside these provisions."
   },
-  minimalA: {
-    title: "Excluded from the Act",
+  outcome7: {
+    title: "Developer of High-Risk AI System",
     color: "#22c55e",
     gradient: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(21, 128, 61, 0.1))",
-    description: "Your AI system is likely excluded from the obligations of the Colorado AI Act.",
-    details: "Excluded AI systems are not subject to mandatory requirements under the Colorado AI Act.",
-    reason: "Your AI system is used exclusively for military, personal non-professional, or scientific R&D purposes"
+    description: "You have full compliance duties as a Developer.",
+    details: "You must use reasonable care to protect consumers from known or reasonably foreseeable risks of algorithmic discrimination. You must provide deployers with a general statement on foreseeable uses and documentation covering the system's purpose, training data summaries, known limitations, performance evaluation, and risk mitigation measures. You must maintain a statement on your website summarizing the types of high-risk AI systems you've developed and how you manage discrimination risks. You must disclose to the Attorney General and all known deployers within 90 days if you discover the system has caused or is likely to cause algorithmic discrimination.",
+    reason: "Your AI system is classified as \"high-risk\" because it is a substantial factor in making a \"consequential decision\" and does not qualify for an exemption.  The Act places specific obligations on the creators of these systems to ensure transparency and accountability down the supply chain."
   },
-  minimalB: {
-    title: "General-Purpose AI (Standard)",
+  outcome8: {
+    title: "Deployer of High-Risk AI System",
     color: "#22c55e",
     gradient: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(21, 128, 61, 0.1))",
-    description: "Your AI system is classified as a General Purpose AI.",
-    details: "You are subject to specific obligations, including creating technical documentation, complying with applicable copyright law, and publishing a detailed summary of the content used to train your model.",
-    reason: "Your GPAI model is not powerful enough to require advanced documentation, but still requires submitting training content."
+    description: "You have full compliance duties as a Deployer.",
+    details: "You must use reasonable care to protect consumers from known or reasonably foreseeable risks of algorithmic discrimination. You must implement and maintain a risk management policy and program, considering frameworks like the NIST AI Risk Management Framework. You must conduct and document an impact assessment for the system at least annually and within 90 days of any substantial modification. You must notify consumers before a consequential decision is made. If a decision is adverse, you must provide the reason(s) and an opportunity for the consumer to correct data and appeal the decision. You must maintain a statement on your website summarizing the types of high-risk systems you deploy and how you manage discrimination risks. You must disclose to the Attorney General within 90 days if you discover the system has caused algorithmic discrimination.",
+    reason: "Your use of the AI system classifies you as a \"Deployer\" of a \"high-risk\" system because it is a substantial factor in making a \"consequential decision.\"  The Act places the most extensive obligations on Deployers as they are the entities directly impacting consumers."
   },
-  minimalC: {
-    title: "Minimal Risk",
+  outcome9: {
+    title: "Both Developer and Deployer of High-Risk AI System",
     color: "#22c55e",
     gradient: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(21, 128, 61, 0.1))",
-    description: "Your AI system is considered to pose minimal or no risk.",
-    details: "The Colorado AI Act imposes no specific legal obligations on your system. You are free to use it, though voluntary best practices are encouraged.",
-    reason: "Your AI system is used for non-high-risk purposes."
+    description: "You must comply with the duties of both roles.",
+    details: "You must fulfill all obligations related to both roles. This includes providing documentation about the system you developed and conducting impact assessments for how you deploy it, among all other duties.",
+    reason: "An entity that develops a high-risk AI system and also uses it to make consequential decisions about consumers is subject to the full set of requirements for both roles under the Act."
   }
 };
 
@@ -84,104 +84,117 @@ const surveyQuestions = [
     id: 'q1',
     question: 'Does your organization conduct business in the state of Colorado, such as offering products or services to Colorado residents? ',
     options: [
-      { label: 'Military or defense.', value: 'military/defense', nextQuestion: 'minimalA' },
-      { label: 'Purely personal, non-professional activities (e.g., a personal hobby project).', value: 'personal', nextQuestion: 'minimalA' },
-      { label: 'Scientific research and development only.', value: 'research', nextQuestion: 'minimalA' },
-      { label: 'None of the above', value: 'other', nextQuestion: 'q2' }
+      { label: 'Yes', value: 'yes', nextQuestion: 'q2' },
+      { label: 'No', value: 'no', nextQuestion: 'outcome1' }
     ]
   },
   {
     id: 'q2',
-    question: 'Does your AI system do any of the following?',
+    question: 'Did you or your organization build the AI system in question, or make deliberate, significant changes to an existing AI system? ',
     options: [
-      { label: 'Use hidden techniques to significantly change a person\'s behavior in a way that could cause them or someone else physical or psychological harm.', value: 'hidden_techniques', nextQuestion: 'unacceptableA' },
-      { label: 'Exploit the vulnerabilities of a specific group of people (due to their age, disability, or social/economic situation) to change their behavior in a harmful way.', value: 'vulnerabilities', nextQuestion: 'unacceptableA' },
-      { label: 'Assign a "social score" to individuals based on their behavior or characteristics, leading to unfair treatment in unrelated situations.', value: 'social_score', nextQuestion: 'unacceptableA' },
-      { label: 'Create or expand facial recognition databases by indiscriminately scraping images from the internet or CCTV footage.', value: 'indiscriminate_scraping', nextQuestion: 'unacceptableA' },
-      { label: 'Analyze or infer the emotions of people in workplaces or educational institutions (unless for specific medical or safety reasons).', value: 'analyze_emotions', nextQuestion: 'unacceptableA' },
-      { label: 'Categorize people based on sensitive data (like race, political opinions, religion, or sexual orientation) using their biometric information.', value: 'categorize_people', nextQuestion: 'unacceptableA' },
-      { label: 'Assess the risk of an individual committing a crime based only on their personality profile or personal traits.', value: 'profile_traits', nextQuestion: 'unacceptableA' },
-      { label: 'Use "real-time" remote biometric identification (like live facial recognition) in public spaces, with very limited exceptions for law enforcement.', value: 'biometric_identification', nextQuestion: 'unacceptableA' },
-      { label: 'None of the above', value: 'none', nextQuestion: 'q3' }
+      { label: 'Yes', value: 'yes', nextQuestion: 'q2a' },
+      { label: 'No', value: 'no', nextQuestion: 'q2b' }
+    ]
+  },
+  {
+    id: 'q2a',
+    question: 'Does your organization also use this AI system to make, or help make, important decisions that have a significant effect on consumers (e.g., in areas like employment, housing, or lending)?',
+    options: [
+      { label: 'Yes', value: 'yes', nextQuestion: 'q3' },
+      { label: 'No', value: 'no', nextQuestion: 'q4' }
+    ]
+  },
+  {
+    id: 'q2b',
+    question: 'Does your organization use an AI system to make, or help make, important decisions that have a significant effect on consumers (e.g., in areas like employment, housing, or lending)?',
+    options: [
+      { label: 'Yes', value: 'yes', nextQuestion: 'q3' },
+      { label: 'No', value: 'no', nextQuestion: 'q6' }
     ]
   },
   {
     id: 'q3',
-    question: 'Is your AI system a safety component of, or is it itself, a product that falls under specific safety regulations? Think of things like:',
+    question: '(For Deployers): Select the criteria that your organization meets, or all of the above:',
     options: [
-      { label: 'Medical devices', value: 'medical_devices', nextQuestion: 'q4' },
-      { label: 'Machinery', value: 'machinery', nextQuestion: 'q4' },
-      { label: 'Toys', value: 'toys', nextQuestion: 'q4' },
-      { label: 'Vehicles (Cars, Agricultural machinery, etc.)', value: 'vehicles', nextQuestion: 'q4' },
-      { label: 'Lifts', value: 'lifts', nextQuestion: 'q4' },
-      { label: 'Personal Protective Equipment', value: 'protective_equipment', nextQuestion: 'q4' },
-      { label: 'Radio Equipment', value: 'radio_equipment', nextQuestion: 'q4' },
-      { label: 'None of the above', value: 'none', nextQuestion: 'q5' }
+      { label: 'Employs fewer than 50 full-time equivalent employees.', value: 'employees', nextQuestion: 'q4' },
+      { label: 'Does NOT use its own data to train the AI system.', value: 'data', nextQuestion: 'q6' },
+      { label: 'The AI system is used only for the intended purposes disclosed by the developer.', value: 'purpose', nextQuestion: 'q6' },
+      { label: 'You make information from the developer\'s impact assessment available to consumers.', value: 'impact_assessment', nextQuestion: 'q6' },
+      { label: 'None of the above', value: 'none', nextQuestion: 'q6' },
+      { label: 'All of the above', value: 'all', nextQuestion: 'outcome2' }
     ]
   },
   {
     id: 'q4',
-    question: 'Does the product you selected legally require a safety check (a "third-party conformity assessment") by an authorized body before it can be sold?',
+    question: 'Does your technology meet the definition of an "Artificial Intelligence System" – a machine-based system that infers from inputs how to generate outputs (like content, decisions, or predictions) that can influence physical or virtual environments?',
     options: [
-      { label: 'Yes', value: 'yes', nextQuestion: 'highRiskB' },
-      { label: 'No', value: 'no', nextQuestion: 'q5' }
+      { label: 'Yes', value: 'yes', nextQuestion: 'q5' },
+      { label: 'No', value: 'no', nextQuestion: 'outcome3' }
     ]
   },
   {
     id: 'q5',
-    question: 'Is your AI system intended to be used for any of the following purposes? (Select all that apply)',
+    question: 'Did your organization create the AI system, or did you make an "intentional and substantial modification" to an existing AI system?',
     options: [
-      { label: 'Biometrics: Identifying or categorizing people based on biometric data (like face or fingerprint scans).', value: 'biometrics', nextQuestion: 'q6' },
-      { label: 'Education: Making key decisions about a person\'s education, such as for admissions, scoring exams, or assigning them to schools.', value: 'education', nextQuestion: 'q6' },
-      { label: 'Employment: Making decisions in the workplace, like sorting resumes for hiring, deciding on promotions, or monitoring employee performance.', value: 'employment', nextQuestion: 'q6' },
-      { label: 'Essential Services: Determining a person\'s access to essential public services (like welfare benefits) or private services (like credit scoring for loans or pricing for health insurance).', value: 'essential_services', nextQuestion: 'q6' },
-      { label: 'Law Enforcement, Migration, or Justice: Use by authorities for purposes like assessing the reliability of evidence, evaluating visa applications, or assisting a judge in legal research.', value: 'law_enforcement', nextQuestion: 'q6' },
-      { label: 'None of the above', value: 'none', nextQuestion: 'q8' }
+      { label: 'Yes', value: 'yes', nextQuestion: 'q6' },
+      { label: 'No', value: 'no', nextQuestion: 'outcome4' }
     ]
   },
   {
     id: 'q6',
-    question: 'Does your AI system perform "profiling"? This means automatically processing personal data to evaluate or predict aspects of a person\'s life, such as their work performance, economic situation, health, personal preferences, or location.',
+    question: 'In which areas is your AI system making, or is it a "substantial factor" in making, a "consequential decision" affecting a consumer?',
     options: [
-      { label: 'Yes', value: 'yes', nextQuestion: 'highRiskA' },
-      { label: 'No', value: 'no', nextQuestion: 'q7' }
+      { label: 'Employment or employment opportunity', value: 'employment', nextQuestion: 'q8' },
+      { label: 'Housing', value: 'housing', nextQuestion: 'q8' },
+      { label: 'Financial or lending service', value: 'financial', nextQuestion: 'q8' },
+      { label: 'Education enrollment or opportunity', value: 'education', nextQuestion: 'q8' },
+      { label: 'Healthcare services', value: 'healthcare_services', nextQuestion: 'q8' },
+      { label: 'Insurance', value: 'insurance', nextQuestion: 'q8' },
+      { label: 'An essential government service', value: 'essential_government_service', nextQuestion: 'q8' },
+      { label: 'Legal services', value: 'legal_services', nextQuestion: 'q8' },
+      { label: 'None of the above', value: 'none', nextQuestion: 'q7' }
     ]
   },
   {
     id: 'q7',
-    question: 'Can you demonstrate that your AI system does not pose a significant risk of harm to people\'s health, safety, or fundamental rights because it is only used for one of the following limited purposes?',
+    question: 'Is the AI system intended to interact directly with consumers?',
     options: [
-      { label: 'It performs a narrow, specific procedural task.', value: 'specific_procedural_task', nextQuestion: 'limitedA' },
-      { label: 'It is only used to improve the result of a task a human has already completed.', value: 'improve_human_task', nextQuestion: 'limitedA' },
-      { label: 'It only detects patterns in decisions and does not replace or influence human judgment without a proper human review.', value: 'pattern_detection', nextQuestion: 'limitedA' },
-      { label: 'It only performs a preparatory task before a human makes the final assessment.', value: 'diagnostics_task', nextQuestion: 'limitedA' },
-      { label: 'None of the above', value: 'none', nextQuestion: 'highRiskA' }
+      { label: 'Yes', value: 'yes', nextQuestion: 'outcome5' },
+      { label: 'No', value: 'no', nextQuestion: 'outcome6' },
     ]
   },
   {
     id: 'q8',
-    question: 'Is your AI a "general-purpose AI model"? This means it can perform a wide range of distinct tasks and can be integrated into many other AI systems (e.g., a large language model like GPT-4).',
+    question: 'Which of the following categories does your AI system fall into? (If your AI system makes a "consequential decision" affecting a consumer, please select "Consequential Decision"):',
     options: [
-      { label: 'Yes', value: 'yes', nextQuestion: 'q9' },
-      { label: 'No', value: 'no', nextQuestion: 'q10' }
-    ]
-  },
-  {
-    id: 'q9',
-    question: 'Does your general-purpose AI model have "systemic risk"? This is typically determined if it was trained using an exceptionally large amount of computing power (greater than 10^25 FLOPs).',
-    options: [
-      { label: 'Yes', value: 'yes', nextQuestion: 'limitedB' },
-      { label: 'No / I don\'t know', value: 'no', nextQuestion: 'minimalB' }
-    ]
-  },
-  {
-    id: 'q10',
-    question: 'Does your AI system do any of the following? (Select all that apply)',
-    options: [
-      { label: 'Interact directly with humans (e.g., a chatbot).', value: 'interact_with_humans', nextQuestion: 'limitedC' },
-      { label: 'Generate or manipulate image, audio, or video content that appears authentic (e.g., "deepfakes").', value: 'generate_manipulate_content', nextQuestion: 'limitedC' },
-      { label: 'Detect emotions or categorize people based on their biometric data (and was not already classified as high-risk or prohibited).', value: 'detect_emotions', nextQuestion: 'limitedC' },
-      { label: 'None of the above', value: 'none', nextQuestion: 'minimalC' }
+      { 
+        label: 'Consequential Decision', 
+        value: 'consequential_decision', 
+        nextQuestion: (answerHistory) => {
+          // Find previous answers from q2a and q2b
+          const q2aAnswer = answerHistory.find(a => a.questionId === 'q2a')?.answer?.value;
+          const q2bAnswer = answerHistory.find(a => a.questionId === 'q2b')?.answer?.value;
+          
+          // Conditional logic based on previous answers
+          if (q2aAnswer === 'no') return 'outcome7';
+          if (q2bAnswer === 'yes') return 'outcome8';
+          return 'outcome9';
+        }
+      },
+      { label: 'Performs ONLY a narrow procedural task.', value: 'narrow_procedural_task', nextQuestion: 'q7' },
+      { label: 'Detects decision-making patterns without replacing or influencing human assessment.', value: 'detect_decision_making_patterns', nextQuestion: 'q7' },
+      { label: 'Is a technology like a spam filter, firewall, spreadsheet, or calculator.', value: 'simple_technology', nextQuestion: 'q7' },
+      { label: 'None of the above', value: 'none', nextQuestion: (answerHistory) => {
+        // Find previous answers from q2a and q2b
+        const q2aAnswer = answerHistory.find(a => a.questionId === 'q2a')?.answer?.value;
+        const q2bAnswer = answerHistory.find(a => a.questionId === 'q2b')?.answer?.value;
+        
+        // Conditional logic based on previous answers
+        if (q2aAnswer === 'no') return 'outcome7';
+        if (q2bAnswer === 'yes') return 'outcome8';
+        return 'outcome9';
+      }
+    }
     ]
   }
 ];
@@ -211,19 +224,28 @@ export default function SurveyPage() {
     }];
     setAnswerHistory(newAnswerHistory);
 
+    // Determine next question (handle both string and function)
+    let nextQuestionId;
+    if (typeof selectedOption.nextQuestion === 'function') {
+      // Pass current answer history to the function so it can access previous answers
+      nextQuestionId = selectedOption.nextQuestion(answerHistory);
+    } else {
+      nextQuestionId = selectedOption.nextQuestion;
+    }
+
     // Check if nextQuestion is a result page
-    if (riskResults[selectedOption.nextQuestion]) {
+    if (riskResults[nextQuestionId]) {
       // Store results in session storage
       sessionStorage.setItem('surveyResults', JSON.stringify(newAnswerHistory));
-      sessionStorage.setItem('riskLevel', selectedOption.nextQuestion);
+      sessionStorage.setItem('riskLevel', nextQuestionId);
       // Show result
-      setResultId(selectedOption.nextQuestion);
+      setResultId(nextQuestionId);
       setSelectedOption(null);
       return;
     }
 
     // Navigate to next question
-    setCurrentQuestionId(selectedOption.nextQuestion);
+    setCurrentQuestionId(nextQuestionId);
     setSelectedOption(null);
   };
 

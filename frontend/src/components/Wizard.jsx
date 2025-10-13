@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Stepper, Step, StepLabel } from "@mui/material";
 import StepGeneral from "./StepGeneral.jsx";
 import StepModelMeta from "./StepModelMeta.jsx";
 import StepRisk from "./StepRisk.jsx";
@@ -29,18 +28,45 @@ export default function Wizard({ initialData = null, disabled = false }) {
   const next = () => setActive((p) => Math.min(p + 1, 3));
   const back = () => setActive((p) => Math.max(p - 1, 0));
 
-  // Debug: confirm props are flowing; remove later
-  // console.debug("Wizard render", { active, form, disabled, hasInitial: !!initialData });
-
   return (
     <>
-      <Stepper activeStep={active} alternativeLabel sx={{ mb: 3 }}>
-        {steps.map((label) => (
-          <Step key={label}>
-            <StepLabel>{label}</StepLabel>
-          </Step>
+      {/* Progress indicator with horizontal bars */}
+      <div style={{
+        display: 'flex',
+        gap: '0.5rem',
+        marginBottom: '2rem',
+        justifyContent: 'center'
+      }}>
+        {steps.map((step, idx) => (
+          <div
+            key={step}
+            style={{
+              flex: 1,
+              height: '4px',
+              background: idx <= active ? 'var(--primary)' : 'var(--border)',
+              borderRadius: '2px',
+              transition: 'background 0.3s ease'
+            }}
+          />
         ))}
-      </Stepper>
+      </div>
+
+      {/* Step labels */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        marginBottom: '2rem'
+      }}>
+        <span style={{
+          color: 'var(--muted)',
+          fontSize: '0.875rem',
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em'
+        }}>
+          Step {active + 1} of {steps.length}: {steps[active]}
+        </span>
+      </div>
 
       {active === 0 && (
         <StepGeneral data={form} setData={setForm} next={next} disabled={disabled} />
