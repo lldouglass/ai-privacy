@@ -385,8 +385,9 @@ Based on your survey responses, your organization has been classified under the 
     
     # Format survey history
     survey_text = "\n".join([
-        f"Q: {item.get('question', '')}\nA: {item.get('answer', {}).get('label', '')}"
+        f"{item.get('question', '')}: {item.get('answer', '')}"
         for item in data.surveyHistory
+        if item.get('answer')
     ])
     
     # Outcome titles map

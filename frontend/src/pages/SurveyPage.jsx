@@ -1,305 +1,445 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles.css";
 
-// Result configurations for different risk outcomes
-const riskResults = {
-  outcome1: {
-    title: "Not Subject to the Colorado AI Act",
-    color: "#ef4444",
-    gradient: "linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1))",
-    description: "Your organization is likely not subject to this act.",
-    details: "The Colorado AI Act applies to persons or entities \"doing business in this state.\"  If your organization has no business nexus with Colorado, the Act's requirements do not apply.",
-    reason: "The Act's jurisdiction is established by the \"doing business in Colorado\" clause. Without this, there are no compliance obligations."
-  },
-  outcome2: {
-    title: "Exempt Deployer",
-    color: "#f59e0b",
-    gradient: "linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1))",
-    description: "You are a small business deployer with reduced obligations.",
-    details: "You are exempt from some of the Act's more burdensome requirements, such as the notice to consumers.  However, you must still use reasonable care to protect consumers from algorithmic discrimination and make impact assessment information available to them.",
-    reason: "The Act provides a narrow exemption for deployers that meet four specific criteria related to size, data usage, and adherence to developer guidelines, aiming to reduce the compliance burden on small businesses."
-  },
-  outcome3: {
-    title: "Not an AI System Under CAIA",
-    color: "#f59e0b",
-    gradient: "linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1))",
-    description: "Your technology does not meet the Act's definition.",
-    details: "Your system is not subject to the requirements of the Colorado AI Act.",
-    reason: "The Act defines an AI system as one that infers from inputs to generate outputs that influence environments.  If your technology does not perform this core function, it falls outside the scope of the legislation."
-  },
- outcome4: {
-    title: "Not a Developer Under CAIA",
-    color: "#3b82f6",
-    gradient: "linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.1))",
-    description: "Your role does not meet the Act's definition.",
-    details: "You are not subject to the specific obligations for Developers under the Act. If you use a high-risk AI system, you may still have obligations as a Deployer.",
-    reason: "A \"Developer\" is defined as an entity that either creates an AI system or \"intentionally and substantially modifies\" one, creating a new risk of discrimination.  Simply using a system without modifying it in this way does not make you a Developer."
-  },
-  outcome5: {
-    title: "General AI System with Disclosure Duty",
-    color: "#3b82f6",
-    gradient: "linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.1))",
-    description: "Your system requires a basic consumer disclosure.",
-    details: "You must disclose to any consumer interacting with the AI system that they are, in fact, interacting with an AI system. This is not required if it would be obvious to a reasonable person.",
-    reason: "The Act includes a broad transparency rule that applies to all consumer-facing AI, not just high-risk systems, to ensure consumers are aware of the nature of their interaction."
-  },
-  outcome6: {
-    title: "Not a Regulated System",
-    color: "#22c55e",
-    gradient: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(21, 128, 61, 0.1))",
-    description: "Your AI system is not currently regulated by CAIA.",
-    details: "Your AI system is not considered \"high-risk\" and is not consumer-facing, so it is not subject to the Act's primary obligations or its general disclosure rule.",
-    reason: "The Act focuses its most stringent requirements on \"high-risk\" systems used for consequential decisions.  It also has a general disclosure rule for consumer-facing AI.  Systems that are neither high-risk nor consumer-facing fall outside these provisions."
-  },
-  outcome7: {
-    title: "Developer of High-Risk AI System",
-    color: "#22c55e",
-    gradient: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(21, 128, 61, 0.1))",
-    description: "You have full compliance duties as a Developer.",
-    details: "You must use reasonable care to protect consumers from known or reasonably foreseeable risks of algorithmic discrimination. You must provide deployers with a general statement on foreseeable uses and documentation covering the system's purpose, training data summaries, known limitations, performance evaluation, and risk mitigation measures. You must maintain a statement on your website summarizing the types of high-risk AI systems you've developed and how you manage discrimination risks. You must disclose to the Attorney General and all known deployers within 90 days if you discover the system has caused or is likely to cause algorithmic discrimination.",
-    reason: "Your AI system is classified as \"high-risk\" because it is a substantial factor in making a \"consequential decision\" and does not qualify for an exemption.  The Act places specific obligations on the creators of these systems to ensure transparency and accountability down the supply chain."
-  },
-  outcome8: {
-    title: "Deployer of High-Risk AI System",
-    color: "#22c55e",
-    gradient: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(21, 128, 61, 0.1))",
-    description: "You have full compliance duties as a Deployer.",
-    details: "You must use reasonable care to protect consumers from known or reasonably foreseeable risks of algorithmic discrimination. You must implement and maintain a risk management policy and program, considering frameworks like the NIST AI Risk Management Framework. You must conduct and document an impact assessment for the system at least annually and within 90 days of any substantial modification. You must notify consumers before a consequential decision is made. If a decision is adverse, you must provide the reason(s) and an opportunity for the consumer to correct data and appeal the decision. You must maintain a statement on your website summarizing the types of high-risk systems you deploy and how you manage discrimination risks. You must disclose to the Attorney General within 90 days if you discover the system has caused algorithmic discrimination.",
-    reason: "Your use of the AI system classifies you as a \"Deployer\" of a \"high-risk\" system because it is a substantial factor in making a \"consequential decision.\"  The Act places the most extensive obligations on Deployers as they are the entities directly impacting consumers."
-  },
-  outcome9: {
-    title: "Both Developer and Deployer of High-Risk AI System",
-    color: "#22c55e",
-    gradient: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(21, 128, 61, 0.1))",
-    description: "You must comply with the duties of both roles.",
-    details: "You must fulfill all obligations related to both roles. This includes providing documentation about the system you developed and conducting impact assessments for how you deploy it, among all other duties.",
-    reason: "An entity that develops a high-risk AI system and also uses it to make consequential decisions about consumers is subject to the full set of requirements for both roles under the Act."
-  }
-};
-
-// Survey questions configuration - easy to modify and extend
-const surveyQuestions = [
+// Survey questions configuration with 9 steps
+const surveySteps = [
+  // Step 0: Scope & role (gate)
   {
-    id: 'q1',
-    question: 'Does your organization conduct business in the state of Colorado, such as offering products or services to Colorado residents? ',
-    options: [
-      { label: 'Yes', value: 'yes', nextQuestion: 'q2' },
-      { label: 'No', value: 'no', nextQuestion: 'outcome1' }
-    ]
-  },
-  {
-    id: 'q2',
-    question: 'Did you or your organization build the AI system in question, or make deliberate, significant changes to an existing AI system? ',
-    options: [
-      { label: 'Yes', value: 'yes', nextQuestion: 'q2a' },
-      { label: 'No', value: 'no', nextQuestion: 'q2b' }
-    ]
-  },
-  {
-    id: 'q2a',
-    question: 'Does your organization also use this AI system to make, or help make, important decisions that have a significant effect on consumers (e.g., in areas like employment, housing, or lending)?',
-    options: [
-      { label: 'Yes', value: 'yes', nextQuestion: 'q3' },
-      { label: 'No', value: 'no', nextQuestion: 'q4' }
-    ]
-  },
-  {
-    id: 'q2b',
-    question: 'Does your organization use an AI system to make, or help make, important decisions that have a significant effect on consumers (e.g., in areas like employment, housing, or lending)?',
-    options: [
-      { label: 'Yes', value: 'yes', nextQuestion: 'q3' },
-      { label: 'No', value: 'no', nextQuestion: 'q6' }
-    ]
-  },
-  {
-    id: 'q3',
-    question: '(For Deployers): Select the criteria that your organization meets, or all of the above:',
-    options: [
-      { label: 'Employs fewer than 50 full-time equivalent employees.', value: 'employees', nextQuestion: 'q4' },
-      { label: 'Does NOT use its own data to train the AI system.', value: 'data', nextQuestion: 'q6' },
-      { label: 'The AI system is used only for the intended purposes disclosed by the developer.', value: 'purpose', nextQuestion: 'q6' },
-      { label: 'You make information from the developer\'s impact assessment available to consumers.', value: 'impact_assessment', nextQuestion: 'q6' },
-      { label: 'None of the above', value: 'none', nextQuestion: 'q6' },
-      { label: 'All of the above', value: 'all', nextQuestion: 'outcome2' }
-    ]
-  },
-  {
-    id: 'q4',
-    question: 'Does your technology meet the definition of an "Artificial Intelligence System" – a machine-based system that infers from inputs how to generate outputs (like content, decisions, or predictions) that can influence physical or virtual environments?',
-    options: [
-      { label: 'Yes', value: 'yes', nextQuestion: 'q5' },
-      { label: 'No', value: 'no', nextQuestion: 'outcome3' }
-    ]
-  },
-  {
-    id: 'q5',
-    question: 'Did your organization create the AI system, or did you make an "intentional and substantial modification" to an existing AI system?',
-    options: [
-      { label: 'Yes', value: 'yes', nextQuestion: 'q6' },
-      { label: 'No', value: 'no', nextQuestion: 'outcome4' }
-    ]
-  },
-  {
-    id: 'q6',
-    question: 'In which areas is your AI system making, or is it a "substantial factor" in making, a "consequential decision" affecting a consumer?',
-    options: [
-      { label: 'Employment or employment opportunity', value: 'employment', nextQuestion: 'q8' },
-      { label: 'Housing', value: 'housing', nextQuestion: 'q8' },
-      { label: 'Financial or lending service', value: 'financial', nextQuestion: 'q8' },
-      { label: 'Education enrollment or opportunity', value: 'education', nextQuestion: 'q8' },
-      { label: 'Healthcare services', value: 'healthcare_services', nextQuestion: 'q8' },
-      { label: 'Insurance', value: 'insurance', nextQuestion: 'q8' },
-      { label: 'An essential government service', value: 'essential_government_service', nextQuestion: 'q8' },
-      { label: 'Legal services', value: 'legal_services', nextQuestion: 'q8' },
-      { label: 'None of the above', value: 'none', nextQuestion: 'q7' }
-    ]
-  },
-  {
-    id: 'q7',
-    question: 'Is the AI system intended to interact directly with consumers?',
-    options: [
-      { label: 'Yes', value: 'yes', nextQuestion: 'outcome5' },
-      { label: 'No', value: 'no', nextQuestion: 'outcome6' },
-    ]
-  },
-  {
-    id: 'q8',
-    question: 'Which of the following categories does your AI system fall into? (If your AI system makes a "consequential decision" affecting a consumer, please select "Consequential Decision"):',
-    options: [
-      { 
-        label: 'Consequential Decision', 
-        value: 'consequential_decision', 
-        nextQuestion: (answerHistory) => {
-          // Find previous answers from q2a and q2b
-          const q2aAnswer = answerHistory.find(a => a.questionId === 'q2a')?.answer?.value;
-          const q2bAnswer = answerHistory.find(a => a.questionId === 'q2b')?.answer?.value;
-          
-          // Conditional logic based on previous answers
-          if (q2aAnswer === 'no') return 'outcome7';
-          if (q2bAnswer === 'yes') return 'outcome8';
-          return 'outcome9';
-        }
+    id: 'step0',
+    title: 'Scope & Role',
+    description: 'Determine if the law applies to you',
+    questions: [
+      {
+        id: 'q0_1',
+        question: 'Do you offer products or services to people or businesses in Colorado?',
+        type: 'single',
+        options: [
+          { label: 'Yes', value: 'yes' },
+          { label: 'No', value: 'no' }
+        ],
+        required: true
       },
-      { label: 'Performs ONLY a narrow procedural task.', value: 'narrow_procedural_task', nextQuestion: 'q7' },
-      { label: 'Detects decision-making patterns without replacing or influencing human assessment.', value: 'detect_decision_making_patterns', nextQuestion: 'q7' },
-      { label: 'Is a technology like a spam filter, firewall, spreadsheet, or calculator.', value: 'simple_technology', nextQuestion: 'q7' },
-      { label: 'None of the above', value: 'none', nextQuestion: (answerHistory) => {
-        // Find previous answers from q2a and q2b
-        const q2aAnswer = answerHistory.find(a => a.questionId === 'q2a')?.answer?.value;
-        const q2bAnswer = answerHistory.find(a => a.questionId === 'q2b')?.answer?.value;
-        
-        // Conditional logic based on previous answers
-        if (q2aAnswer === 'no') return 'outcome7';
-        if (q2bAnswer === 'yes') return 'outcome8';
-        return 'outcome9';
+      {
+        id: 'q0_2',
+        question: 'Which best describes you for this AI system?',
+        type: 'single',
+        options: [
+          { label: 'Developer (we built it)', value: 'developer' },
+          { label: 'Deployer (we use it)', value: 'deployer' },
+          { label: 'Both', value: 'both' }
+        ],
+        required: true,
+        showIf: (answers) => answers.q0_1 === 'yes'
+      },
+      {
+        id: 'q0_3',
+        question: 'Who built the system you use?',
+        type: 'single',
+        options: [
+          { label: 'We built it', value: 'we_built' },
+          { label: 'A vendor', value: 'vendor' },
+          { label: 'Open-source model we configured', value: 'open_source' }
+        ],
+        required: true,
+        showIf: (answers) => answers.q0_1 === 'yes'
       }
-    }
+    ]
+  },
+
+  // Step 1: What the AI actually does
+  {
+    id: 'step1',
+    title: 'What the AI Does',
+    description: 'Describe your AI system capabilities',
+    questions: [
+      {
+        id: 'q1_1',
+        question: 'What does the AI do? (select all that apply)',
+        type: 'multi',
+        options: [
+          { label: 'Screens, ranks, scores, or approves/denies people', value: 'screening' },
+          { label: 'Sets terms for people (price, rate, limits, eligibility)', value: 'terms' },
+          { label: 'Recommends options to a human decision-maker', value: 'recommends' },
+          { label: 'Summarizes, classifies, or labels content/data', value: 'summarizes' },
+          { label: 'Detects patterns or anomalies', value: 'detects' },
+          { label: 'Other', value: 'other' }
+        ],
+        required: true
+      },
+      {
+        id: 'q1_1_other',
+        question: 'Please describe what the AI does:',
+        type: 'text',
+        required: false,
+        showIf: (answers) => answers.q1_1?.includes('other')
+      },
+      {
+        id: 'q1_2',
+        question: 'Does a person interact directly with the AI (chatbot, voice bot, auto-reply, etc.)?',
+        type: 'single',
+        options: [
+          { label: 'Yes', value: 'yes' },
+          { label: 'No', value: 'no' }
+        ],
+        required: true
+      },
+      {
+        id: 'q1_3',
+        question: 'If Yes, would a reasonable person know it\'s an AI?',
+        type: 'single',
+        options: [
+          { label: 'Yes', value: 'yes' },
+          { label: 'No', value: 'no' },
+          { label: 'Not sure', value: 'not_sure' }
+        ],
+        required: true,
+        showIf: (answers) => answers.q1_2 === 'yes'
+      }
+    ]
+  },
+
+  // Step 2: Is it a "consequential decision" (high-risk)?
+  {
+    id: 'step2',
+    title: 'High-Risk Assessment',
+    description: 'Determine if this is a consequential decision',
+    questions: [
+      {
+        id: 'q2_1',
+        question: 'In which areas is the AI a substantial factor in decisions about a person? (select all that apply)',
+        type: 'multi',
+        options: [
+          { label: 'Employment', value: 'employment' },
+          { label: 'Housing', value: 'housing' },
+          { label: 'Financial/lending', value: 'financial' },
+          { label: 'Education', value: 'education' },
+          { label: 'Healthcare', value: 'healthcare' },
+          { label: 'Insurance', value: 'insurance' },
+          { label: 'Essential government service', value: 'govt_service' },
+          { label: 'Legal services', value: 'legal' },
+          { label: 'None of the above', value: 'none' }
+        ],
+        required: true
+      },
+      {
+        id: 'q2_2',
+        question: 'How is the final decision made, in practice?',
+        type: 'single',
+        options: [
+          { label: 'AI auto-decides with no human review', value: 'auto' },
+          { label: 'Human reviews/overrides most of the time', value: 'mostly_human' },
+          { label: 'Human reviews only edge cases or appeals', value: 'edge_cases' }
+        ],
+        required: true,
+        showIf: (answers) => answers.q2_1 && !answers.q2_1.includes('none')
+      },
+      {
+        id: 'q2_3',
+        question: 'Roughly, what % of decisions are automated end-to-end?',
+        type: 'slider',
+        options: [
+          { label: '0%', value: '0' },
+          { label: '<25%', value: '25' },
+          { label: '25–75%', value: '50' },
+          { label: '>75%', value: '100' }
+        ],
+        required: true,
+        showIf: (answers) => answers.q2_1 && !answers.q2_1.includes('none')
+      }
+    ]
+  },
+
+  // Step 3: Publishing & contacts
+  {
+    id: 'step9',
+    title: 'Publishing & Contacts',
+    description: 'Public disclosure and consumer contact',
+    questions: [
+      {
+        id: 'q9_1',
+        question: 'Do you want us to generate a public "AI in use" web page for you?',
+        type: 'single',
+        options: [
+          { label: 'Yes', value: 'yes' },
+          { label: 'No', value: 'no' }
+        ],
+        required: true
+      },
+      {
+        id: 'q9_2',
+        question: 'Where should consumers send questions/appeals?',
+        type: 'text',
+        placeholder: 'email@company.com or support URL',
+        required: true
+      }
     ]
   }
 ];
 
 export default function SurveyPage() {
   const navigate = useNavigate();
-  const [currentQuestionId, setCurrentQuestionId] = useState('q1');
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [answerHistory, setAnswerHistory] = useState([]);
-  const [resultId, setResultId] = useState(null); // Track if we're showing a result
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [currentStepAnswers, setCurrentStepAnswers] = useState({});
+  const [showResults, setShowResults] = useState(false);
 
-  // Find current question or result
-  const currentQuestion = surveyQuestions.find(q => q.id === currentQuestionId);
-  const currentResult = riskResults[resultId];
+  // Filter questions based on showIf conditions
+  const getVisibleQuestions = (step) => {
+    return step.questions.filter(q => {
+      if (!q.showIf) return true;
+      return q.showIf(answers);
+    });
+  };
 
-  const handleOptionSelect = (option) => {
-    setSelectedOption(option);
+  const currentStep = surveySteps[currentStepIndex];
+  const visibleQuestions = currentStep ? getVisibleQuestions(currentStep) : [];
+  const isLastStep = currentStepIndex === surveySteps.length - 1;
+
+  // Check if all required questions in current step are answered
+  const canProceed = () => {
+    return visibleQuestions.every(q => {
+      if (!q.required) return true;
+      const answer = currentStepAnswers[q.id];
+      if (q.type === 'multi') return answer && answer.length > 0;
+      if (q.type === 'text') return answer && answer.trim().length > 0;
+      return answer !== undefined && answer !== null && answer !== '';
+    });
+  };
+
+  const handleAnswerChange = (questionId, value, questionType) => {
+    setCurrentStepAnswers(prev => {
+      if (questionType === 'multi') {
+        const current = prev[questionId] || [];
+        if (current.includes(value)) {
+          return { ...prev, [questionId]: current.filter(v => v !== value) };
+        } else {
+          return { ...prev, [questionId]: [...current, value] };
+        }
+      }
+      return { ...prev, [questionId]: value };
+    });
   };
 
   const handleNext = () => {
-    if (!selectedOption) return;
+    // Save current step answers
+    setAnswers(prev => ({ ...prev, ...currentStepAnswers }));
 
-    const newAnswerHistory = [...answerHistory, {
-      questionId: currentQuestionId,
-      question: currentQuestion.question,
-      answer: selectedOption
-    }];
-    setAnswerHistory(newAnswerHistory);
-
-    // Determine next question (handle both string and function)
-    let nextQuestionId;
-    if (typeof selectedOption.nextQuestion === 'function') {
-      // Pass current answer history to the function so it can access previous answers
-      nextQuestionId = selectedOption.nextQuestion(answerHistory);
+    if (isLastStep) {
+      // Show results
+      setShowResults(true);
     } else {
-      nextQuestionId = selectedOption.nextQuestion;
+      // Move to next step
+      setCurrentStepIndex(prev => prev + 1);
+      setCurrentStepAnswers({});
     }
-
-    // Check if nextQuestion is a result page
-    if (riskResults[nextQuestionId]) {
-      // Store results in session storage
-      sessionStorage.setItem('surveyResults', JSON.stringify(newAnswerHistory));
-      sessionStorage.setItem('riskLevel', nextQuestionId);
-      // Show result
-      setResultId(nextQuestionId);
-      setSelectedOption(null);
-      return;
-    }
-
-    // Navigate to next question
-    setCurrentQuestionId(nextQuestionId);
-    setSelectedOption(null);
   };
 
   const handleBack = () => {
-    // If on result page, go back to last question
-    if (resultId) {
-      const previousAnswer = answerHistory[answerHistory.length - 1];
-      setResultId(null);
-      setCurrentQuestionId(previousAnswer.questionId);
-      setSelectedOption(previousAnswer.answer);
-      setAnswerHistory(answerHistory.slice(0, -1));
-      return;
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex(prev => prev - 1);
+      setCurrentStepAnswers({});
     }
-
-    if (answerHistory.length === 0) return;
-
-    // Get previous question from history
-    const previousAnswer = answerHistory[answerHistory.length - 1];
-    setCurrentQuestionId(previousAnswer.questionId);
-    setSelectedOption(previousAnswer.answer);
-    setAnswerHistory(answerHistory.slice(0, -1));
   };
 
-  // Show result page if we have a result
-  if (currentResult) {
+  const handleRestart = () => {
+    setCurrentStepIndex(0);
+    setAnswers({});
+    setCurrentStepAnswers({});
+    setShowResults(false);
+  };
+
+  const handleDownloadDocuments = async () => {
+    try {
+      const classification = getRiskClassification();
+      const allAnswers = { ...answers, ...currentStepAnswers };
+
+      const response = await fetch('/api/generate-survey-documents', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          answers: allAnswers,
+          classification: classification
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate documents');
+      }
+
+      const data = await response.json();
+
+      // Create a zip-like download by combining all documents into one markdown file
+      let combinedMarkdown = '# Colorado AI Act Compliance Documents\n\n';
+      combinedMarkdown += `Generated: ${new Date().toLocaleDateString()}\n\n`;
+      combinedMarkdown += `**Classification:** ${classification.title}\n\n`;
+      combinedMarkdown += '---\n\n';
+
+      Object.entries(data.documents).forEach(([key, content]) => {
+        combinedMarkdown += `\n\n${content}\n\n---\n\n`;
+      });
+
+      // Create download
+      const blob = new Blob([combinedMarkdown], { type: 'text/markdown' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `caia-compliance-documents-${new Date().toISOString().split('T')[0]}.md`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      alert(`Successfully generated ${data.document_count} compliance documents!`);
+    } catch (error) {
+      console.error('Error generating documents:', error);
+      alert('Failed to generate documents. Please try again or contact support.');
+    }
+  };
+
+  const handleGenerateDocumentation = () => {
+    const classification = getRiskClassification();
+    const allAnswers = { ...answers, ...currentStepAnswers };
+    
+    // Store data in sessionStorage for DocumentationPage
+    sessionStorage.setItem('riskLevel', classification.outcome);
+    sessionStorage.setItem('surveyResults', JSON.stringify(allAnswers));
+    
+    // Navigate to documentation page
+    navigate('/documentation');
+  };
+
+  // Calculate risk classification
+  const getRiskClassification = () => {
+    if (answers.q0_1 === 'no') {
+      return {
+        title: 'Not Subject to Colorado AI Act',
+        color: '#22c55e',
+        description: 'Your organization does not do business in Colorado.',
+        outcome: 'outcome1'
+      };
+    }
+
+    const isHighRisk = answers.q2_1 && !answers.q2_1.includes('none');
+    const isConsumerFacing = answers.q1_2 === 'yes';
+    const needsDisclosure = isConsumerFacing && answers.q1_3 !== 'yes';
+    const role = answers.q0_2;
+
+    if (!isHighRisk && !isConsumerFacing) {
+      return {
+        title: 'Not a Regulated System',
+        color: '#22c55e',
+        description: 'Your AI system is not high-risk and not consumer-facing.',
+        outcome: 'outcome6'
+      };
+    }
+
+    if (!isHighRisk && needsDisclosure) {
+      return {
+        title: 'General AI with Disclosure Duty',
+        color: '#f59e0b',
+        description: 'You must disclose to consumers that they are interacting with AI.',
+        outcome: 'outcome5'
+      };
+    }
+
+    if (isHighRisk) {
+      const roleText = role === 'both' ? 'Developer & Deployer' :
+                      role === 'developer' ? 'Developer' : 'Deployer';
+      let outcome = 'outcome8'; // Default to Deployer
+      if (role === 'both') outcome = 'outcome9';
+      else if (role === 'developer') outcome = 'outcome7';
+      
+      return {
+        title: `High-Risk ${roleText}`,
+        color: '#ef4444',
+        description: 'You have full compliance duties under the Colorado AI Act.',
+        outcome: outcome
+      };
+    }
+
+    return {
+      title: 'General AI System',
+      color: '#22c55e',
+      description: 'Basic compliance requirements apply.',
+      outcome: 'outcome6'
+    };
+  };
+
+  // Generate document pack summary
+  const getDocumentPackSummary = () => {
+    const docs = [];
+    const isHighRisk = answers.q2_1 && !answers.q2_1.includes('none');
+    const isConsumerFacing = answers.q1_2 === 'yes';
+    const isDeveloper = answers.q0_2 === 'developer' || answers.q0_2 === 'both';
+    const isDeployer = answers.q0_2 === 'deployer' || answers.q0_2 === 'both';
+
+    if (isConsumerFacing && answers.q1_3 !== 'yes') {
+      docs.push('Consumer pre-use disclosure notice');
+    }
+
+    if (isHighRisk && isDeployer) {
+      docs.push('Impact Assessment template');
+      docs.push('Risk Management Program checklist');
+      docs.push('Adverse action notice template');
+      docs.push('Consumer rights & appeals process');
+      docs.push('Evidence log template');
+    }
+
+    if (isDeployer && answers.q6_1 !== 'all') {
+      docs.push('Vendor documentation request letter');
+    }
+
+    if (isHighRisk && isDeveloper) {
+      docs.push('Developer documentation pack');
+      docs.push('AG notification playbook');
+    }
+
+    if (answers.q9_1 === 'yes') {
+      docs.push('Public "AI in use" disclosure page');
+    }
+
+    if (answers.q8_1 === 'yes' || answers.q8_1 === 'not_sure') {
+      docs.push('Bias testing starter plan');
+    }
+
+    docs.push('Personalized action checklist');
+
+    return docs;
+  };
+
+  if (showResults) {
+    const classification = getRiskClassification();
+    const documents = getDocumentPackSummary();
+
     return (
       <div style={{
         minHeight: '100vh',
         background: 'linear-gradient(180deg, var(--bg) 0%, var(--bg-elev) 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         padding: '2rem'
       }}>
         <div style={{
           maxWidth: '900px',
-          width: '100%',
+          margin: '0 auto',
           background: 'var(--panel)',
           borderRadius: '16px',
           border: '1px solid var(--border)',
           padding: '3rem',
           boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)'
         }}>
-          {/* Risk Level Badge */}
+          {/* Classification Badge */}
           <div style={{
             display: 'inline-block',
             padding: '0.5rem 1rem',
-            background: currentResult.gradient,
-            border: `2px solid ${currentResult.color}`,
+            background: `linear-gradient(135deg, ${classification.color}22, ${classification.color}11)`,
+            border: `2px solid ${classification.color}`,
             borderRadius: '8px',
             marginBottom: '1.5rem'
           }}>
             <span style={{
-              color: currentResult.color,
+              color: classification.color,
               fontWeight: '700',
               fontSize: '0.875rem',
               textTransform: 'uppercase',
@@ -309,74 +449,88 @@ export default function SurveyPage() {
             </span>
           </div>
 
-          {/* Title */}
           <h1 style={{
             fontSize: '2.5rem',
             fontWeight: '700',
-            color: currentResult.color,
+            color: classification.color,
             marginBottom: '1rem',
             lineHeight: '1.2'
           }}>
-            {currentResult.title}
+            {classification.title}
           </h1>
 
-          {/* Description */}
           <p style={{
             fontSize: '1.25rem',
             color: 'var(--text)',
-            marginBottom: '1.5rem',
-            fontWeight: '500',
+            marginBottom: '2rem',
             lineHeight: '1.5'
           }}>
-            {currentResult.description}
+            {classification.description}
           </p>
 
-          {/* Details */}
-          <p style={{
-            fontSize: '1rem',
-            color: 'var(--muted)',
-            marginBottom: '1.5rem',
-            lineHeight: '1.7'
-          }}>
-            {currentResult.details}
-          </p>
-
-          {/* Reason box */}
+          {/* Document Pack */}
           <div style={{
             background: 'var(--bg-elev)',
             border: '1px solid var(--border)',
             borderRadius: '12px',
-            padding: '1.25rem',
-            marginBottom: '2.5rem'
+            padding: '1.5rem',
+            marginBottom: '2rem'
           }}>
             <h3 style={{
-              fontSize: '0.875rem',
+              fontSize: '1.125rem',
               fontWeight: '700',
-              color: 'var(--muted)',
-              marginBottom: '0.5rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em'
-            }}>
-              Why this classification?
-            </h3>
-            <p style={{
               color: 'var(--text)',
-              fontSize: '1rem',
-              margin: 0,
-              lineHeight: '1.6'
+              marginBottom: '1rem'
             }}>
-              {currentResult.reason}
-            </p>
+              Your Personalized Documentation Pack
+            </h3>
+            <ul style={{
+              listStyle: 'none',
+              padding: 0,
+              margin: 0
+            }}>
+              {documents.map((doc, idx) => (
+                <li key={idx} style={{
+                  padding: '0.5rem 0',
+                  color: 'var(--text)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <span style={{ color: classification.color }}>✓</span>
+                  {doc}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* Call to action */}
+          {/* Action buttons */}
           <div style={{
             display: 'flex',
             gap: '1rem',
             flexWrap: 'wrap'
           }}>
             <button
-              onClick={() => navigate('/documentation')}
+              onClick={handleDownloadDocuments}
+              style={{
+                flex: '1',
+                minWidth: '200px',
+                padding: '1rem 2rem',
+                background: `linear-gradient(90deg, ${classification.color}, ${classification.color}dd)`,
+                border: 'none',
+                borderRadius: '10px',
+                color: '#fff',
+                fontSize: '1.125rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontFamily: 'inherit'
+              }}
+            >
+              Download Documents
+            </button>
+
+            <button
+              onClick={handleGenerateDocumentation}
               style={{
                 flex: '1',
                 minWidth: '200px',
@@ -388,25 +542,15 @@ export default function SurveyPage() {
                 fontSize: '1.125rem',
                 fontWeight: '600',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
                 fontFamily: 'inherit',
                 boxShadow: '0 4px 14px rgba(99, 102, 241, 0.25)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.filter = 'brightness(1.1)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.filter = 'brightness(1)';
-                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
               Generate Documentation →
             </button>
 
-
             <button
-              onClick={handleBack}
+              onClick={() => navigate('/')}
               style={{
                 padding: '1rem 2rem',
                 background: 'transparent',
@@ -416,30 +560,14 @@ export default function SurveyPage() {
                 fontSize: '1rem',
                 fontWeight: '600',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
                 fontFamily: 'inherit'
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--primary)';
-                e.currentTarget.style.color = '#fff';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border)';
-                e.currentTarget.style.color = 'var(--text)';
-              }}
             >
-              &lt; Back
+              Back to Home
             </button>
 
             <button
-              onClick={() => {
-                sessionStorage.removeItem('surveyResults');
-                sessionStorage.removeItem('riskLevel');
-                setResultId(null);
-                setCurrentQuestionId('q1');
-                setAnswerHistory([]);
-                setSelectedOption(null);
-              }}
+              onClick={handleRestart}
               style={{
                 padding: '1rem 2rem',
                 background: 'transparent',
@@ -449,16 +577,7 @@ export default function SurveyPage() {
                 fontSize: '1rem',
                 fontWeight: '600',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
                 fontFamily: 'inherit'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--primary)';
-                e.currentTarget.style.color = '#fff';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border)';
-                e.currentTarget.style.color = 'var(--text)';
               }}
             >
               Retake Survey
@@ -469,29 +588,22 @@ export default function SurveyPage() {
     );
   }
 
-  if (!currentQuestion) {
-    return <div>Error: Question not found</div>;
-  }
-
   return (
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(180deg, var(--bg) 0%, var(--bg-elev) 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
       padding: '2rem'
     }}>
       <div style={{
         maxWidth: '800px',
-        width: '100%',
+        margin: '0 auto',
         background: 'var(--panel)',
         borderRadius: '16px',
         border: '1px solid var(--border)',
         padding: '3rem',
         boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)'
       }}>
-        {/* Title */}
+        {/* Header */}
         <h1 style={{
           fontSize: '2.25rem',
           fontWeight: '700',
@@ -499,136 +611,242 @@ export default function SurveyPage() {
           marginBottom: '0.5rem',
           textAlign: 'center'
         }}>
-          Colorado AI Compliance Survey
+          Colorado AI Compliance Assessment
         </h1>
         <p style={{
           fontSize: '1rem',
           color: 'var(--muted)',
-          marginBottom: '3rem',
+          marginBottom: '2rem',
           textAlign: 'center'
         }}>
-          Determine Your Risk Level
+          Step {currentStepIndex + 1} of {surveySteps.length}
         </p>
 
-        {/* Progress indicator */}
+        {/* Progress bar */}
         <div style={{
-          display: 'flex',
-          gap: '0.5rem',
+          width: '100%',
+          height: '8px',
+          background: 'var(--border)',
+          borderRadius: '4px',
           marginBottom: '2rem',
-          justifyContent: 'center'
+          overflow: 'hidden'
         }}>
-          {surveyQuestions.map((q, idx) => (
-            <div
-              key={q.id}
-              style={{
-                width: '3rem',
-                height: '4px',
-                background: answerHistory.some(a => a.questionId === q.id) || q.id === currentQuestionId
-                  ? 'var(--primary)'
-                  : 'var(--border)',
-                borderRadius: '2px',
-                transition: 'background 0.3s ease'
-              }}
-            />
+          <div style={{
+            width: `${((currentStepIndex + 1) / surveySteps.length) * 100}%`,
+            height: '100%',
+            background: 'var(--primary)',
+            transition: 'width 0.3s ease'
+          }} />
+        </div>
+
+        {/* Step title */}
+        <div style={{
+          marginBottom: '2rem',
+          paddingBottom: '1rem',
+          borderBottom: '2px solid var(--border)'
+        }}>
+          <h2 style={{
+            fontSize: '1.75rem',
+            fontWeight: '600',
+            color: 'var(--text)',
+            marginBottom: '0.5rem'
+          }}>
+            {currentStep.title}
+          </h2>
+          <p style={{
+            fontSize: '1rem',
+            color: 'var(--muted)'
+          }}>
+            {currentStep.description}
+          </p>
+        </div>
+
+        {/* Questions */}
+        <div style={{ marginBottom: '2rem' }}>
+          {visibleQuestions.map((question, idx) => (
+            <div key={question.id} style={{ marginBottom: '2rem' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '1.125rem',
+                fontWeight: '500',
+                color: 'var(--text)',
+                marginBottom: '1rem'
+              }}>
+                {question.question}
+                {question.required && <span style={{ color: '#ef4444' }}> *</span>}
+              </label>
+
+              {/* Single select */}
+              {question.type === 'single' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {question.options.map(option => {
+                    const isSelected = currentStepAnswers[question.id] === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        onClick={() => handleAnswerChange(question.id, option.value, 'single')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.75rem',
+                          padding: '1rem',
+                          background: isSelected ? 'rgba(99, 102, 241, 0.1)' : 'var(--bg-elev)',
+                          border: `2px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}`,
+                          borderRadius: '10px',
+                          color: 'var(--text)',
+                          fontSize: '1rem',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          fontFamily: 'inherit',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <div style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          border: `2px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}`,
+                          background: isSelected ? 'var(--primary)' : 'transparent',
+                          flexShrink: 0
+                        }} />
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Multi select */}
+              {question.type === 'multi' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {question.options.map(option => {
+                    const isSelected = (currentStepAnswers[question.id] || []).includes(option.value);
+                    return (
+                      <button
+                        key={option.value}
+                        onClick={() => handleAnswerChange(question.id, option.value, 'multi')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.75rem',
+                          padding: '1rem',
+                          background: isSelected ? 'rgba(99, 102, 241, 0.1)' : 'var(--bg-elev)',
+                          border: `2px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}`,
+                          borderRadius: '10px',
+                          color: 'var(--text)',
+                          fontSize: '1rem',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          fontFamily: 'inherit',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <div style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '4px',
+                          border: `2px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}`,
+                          background: isSelected ? 'var(--primary)' : 'transparent',
+                          flexShrink: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          {isSelected && (
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <path d="M10 3L4.5 8.5L2 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </div>
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Text input */}
+              {question.type === 'text' && (
+                <input
+                  type="text"
+                  value={currentStepAnswers[question.id] || ''}
+                  onChange={(e) => handleAnswerChange(question.id, e.target.value, 'text')}
+                  placeholder={question.placeholder || ''}
+                  style={{
+                    width: '100%',
+                    padding: '1rem',
+                    background: 'var(--bg-elev)',
+                    border: '2px solid var(--border)',
+                    borderRadius: '10px',
+                    color: 'var(--text)',
+                    fontSize: '1rem',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              )}
+
+              {/* Date input */}
+              {question.type === 'date' && (
+                <input
+                  type="date"
+                  value={currentStepAnswers[question.id] || ''}
+                  onChange={(e) => handleAnswerChange(question.id, e.target.value, 'date')}
+                  style={{
+                    width: '100%',
+                    padding: '1rem',
+                    background: 'var(--bg-elev)',
+                    border: '2px solid var(--border)',
+                    borderRadius: '10px',
+                    color: 'var(--text)',
+                    fontSize: '1rem',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              )}
+
+              {/* Slider */}
+              {question.type === 'slider' && (
+                <div>
+                  <input
+                    type="range"
+                    min="0"
+                    max={question.options.length - 1}
+                    value={question.options.findIndex(o => o.value === currentStepAnswers[question.id])}
+                    onChange={(e) => {
+                      const idx = parseInt(e.target.value);
+                      handleAnswerChange(question.id, question.options[idx].value, 'slider');
+                    }}
+                    style={{
+                      width: '100%',
+                      marginBottom: '0.5rem'
+                    }}
+                  />
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '0.875rem',
+                    color: 'var(--muted)'
+                  }}>
+                    {question.options.map(opt => (
+                      <span key={opt.value}>{opt.label}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
         </div>
 
-        {/* Question */}
-        <h2 style={{
-          fontSize: '1.75rem',
-          fontWeight: '600',
-          color: 'var(--text)',
-          marginBottom: '2rem',
-          lineHeight: '1.4'
-        }}>
-          {currentQuestion.question}
-        </h2>
-
-        {/* Options */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1rem',
-          marginBottom: '3rem'
-        }}>
-          {currentQuestion.options.map((option) => {
-            const isSelected = selectedOption?.value === option.value;
-            
-            return (
-              <button
-                key={option.value}
-                onClick={() => handleOptionSelect(option)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem',
-                  padding: '1.25rem 1.5rem',
-                  background: isSelected ? 'rgba(99, 102, 241, 0.1)' : 'var(--bg-elev)',
-                  border: `2px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}`,
-                  borderRadius: '12px',
-                  color: 'var(--text)',
-                  fontSize: '1rem',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  textAlign: 'left',
-                  fontFamily: 'inherit'
-                }}
-                onMouseEnter={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.transform = 'scale(1.02)';
-                    e.currentTarget.style.borderColor = 'var(--primary)';
-                    e.currentTarget.style.background = 'rgba(99, 102, 241, 0.05)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.borderColor = 'var(--border)';
-                    e.currentTarget.style.background = 'var(--bg-elev)';
-                  }
-                }}
-              >
-                {/* Checkbox indicator */}
-                <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  border: `2px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}`,
-                  background: isSelected ? 'var(--primary)' : 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  transition: 'all 0.2s ease'
-                }}>
-                  {isSelected && (
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path
-                        d="M11.6666 3.5L5.24992 9.91667L2.33325 7"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
-                </div>
-                <span>{option.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Navigation buttons */}
+        {/* Navigation */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          paddingTop: '1rem',
+          borderTop: '1px solid var(--border)'
         }}>
           <button
             onClick={handleBack}
-            disabled={answerHistory.length === 0}
+            disabled={currentStepIndex === 0}
             style={{
               padding: '0.75rem 1.5rem',
               background: 'transparent',
@@ -637,60 +855,34 @@ export default function SurveyPage() {
               color: 'var(--text)',
               fontSize: '1rem',
               fontWeight: '600',
-              cursor: answerHistory.length === 0 ? 'not-allowed' : 'pointer',
-              opacity: answerHistory.length === 0 ? 0.4 : 1,
-              transition: 'all 0.2s ease',
+              cursor: currentStepIndex === 0 ? 'not-allowed' : 'pointer',
+              opacity: currentStepIndex === 0 ? 0.4 : 1,
               fontFamily: 'inherit'
             }}
-            onMouseEnter={(e) => {
-              if (answerHistory.length > 0) {
-                e.currentTarget.style.borderColor = 'var(--primary)';
-                e.currentTarget.style.color = '#fff';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (answerHistory.length > 0) {
-                e.currentTarget.style.borderColor = 'var(--border)';
-                e.currentTarget.style.color = 'var(--text)';
-              }
-            }}
           >
-            &lt; Back
+            ← Back
           </button>
 
           <button
             onClick={handleNext}
-            disabled={!selectedOption}
+            disabled={!canProceed()}
             style={{
               padding: '0.75rem 1.5rem',
-              background: selectedOption ? 'var(--ok)' : 'var(--border)',
+              background: canProceed() ? 'var(--ok)' : 'var(--border)',
               border: 'none',
               borderRadius: '10px',
               color: '#fff',
               fontSize: '1rem',
               fontWeight: '600',
-              cursor: selectedOption ? 'pointer' : 'not-allowed',
-              opacity: selectedOption ? 1 : 0.6,
-              transition: 'all 0.2s ease',
-              fontFamily: 'inherit',
-              boxShadow: selectedOption ? '0 4px 14px rgba(34, 197, 94, 0.25)' : 'none'
-            }}
-            onMouseEnter={(e) => {
-              if (selectedOption) {
-                e.currentTarget.style.filter = 'brightness(1.1)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (selectedOption) {
-                e.currentTarget.style.filter = 'brightness(1)';
-              }
+              cursor: canProceed() ? 'pointer' : 'not-allowed',
+              opacity: canProceed() ? 1 : 0.6,
+              fontFamily: 'inherit'
             }}
           >
-            Next &gt;
+            {isLastStep ? 'Get Results →' : 'Next →'}
           </button>
         </div>
       </div>
     </div>
   );
 }
-

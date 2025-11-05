@@ -270,13 +270,19 @@ export default function DocumentationPage() {
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      const surveyHistory = JSON.parse(sessionStorage.getItem('surveyResults') || '[]');
+      const surveyAnswers = JSON.parse(sessionStorage.getItem('surveyResults') || '{}');
+      
+      // Convert survey answers to a more readable format for the API
+      const formattedSurveyHistory = Object.entries(surveyAnswers).map(([key, value]) => ({
+        question: key,
+        answer: Array.isArray(value) ? value.join(', ') : value
+      }));
       
       const response = await axios.post('/api/generate-outcome-documentation', {
         outcome,
         answers,
         checklist,
-        surveyHistory
+        surveyHistory: formattedSurveyHistory
       });
       
       setGeneratedDoc(response.data.report);
