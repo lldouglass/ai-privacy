@@ -5,6 +5,7 @@ import SurveyPage from "./pages/SurveyPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import DemoPage from "./pages/DemoPage.jsx";
 import SharePage from "./pages/SharePage.jsx";
+import DocumentationPage from "./pages/DocumentationPage.jsx";
 
 function MainLandingPage() {
   const year = new Date().getFullYear();
@@ -147,6 +148,7 @@ export default function App() {
       <Route path="/survey" element={<SurveyPage />} />
       <Route path="/checkup" element={<HomePage />} />
       <Route path="/demo" element={<DemoPage />} />
+      <Route path="/documentation" element={<DocumentationPage />} />
       <Route path="/share/:shareId" element={<SharePage />} />
     </Routes>
   );

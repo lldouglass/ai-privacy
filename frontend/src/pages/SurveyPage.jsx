@@ -376,7 +376,7 @@ export default function SurveyPage() {
             flexWrap: 'wrap'
           }}>
             <button
-              onClick={() => navigate('/checkup')}
+              onClick={() => navigate('/documentation')}
               style={{
                 flex: '1',
                 minWidth: '200px',
@@ -404,35 +404,6 @@ export default function SurveyPage() {
               Generate Documentation →
             </button>
 
-            <button
-              onClick={() => navigate('/demo')}
-              style={{
-                flex: '1',
-                minWidth: '200px',
-                padding: '1rem 2rem',
-                background: 'transparent',
-                border: '1px solid var(--primary)',
-                borderRadius: '10px',
-                color: 'var(--text)',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                fontFamily: 'inherit'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--primary)';
-                e.currentTarget.style.color = '#fff';
-                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--primary)';
-                e.currentTarget.style.color = 'var(--text)';
-                e.currentTarget.style.background = 'transparent';
-              }}
-            >
-              See live demo
-            </button>
 
             <button
               onClick={handleBack}

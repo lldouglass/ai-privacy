@@ -133,6 +133,12 @@ class QuickInput(BaseModel):
     free_text_notes: Optional[str] = None
     ephemeral: Optional[bool] = False
 
+class OutcomeDocumentationInput(BaseModel):
+    outcome: str
+    answers: dict
+    checklist: dict
+    surveyHistory: list
+
 # ── Helpers ───────────────────────────────────────────────────────────────
 def _compose_context_snippets(snips):
     lines = []
@@ -340,6 +346,98 @@ def delete_project(project_id: int, request: Request):
             raise HTTPException(404, "Not found")
         s.delete(obj); s.commit()
     return {"deleted": project_id}
+
+@app.post("/api/generate-outcome-documentation")
+def generate_outcome_documentation(data: OutcomeDocumentationInput, request: Request):
+    """Generate compliance documentation based on survey outcome and user answers."""
+    _rate_limit(request.client.host)
+    # Note: not checking invite for this endpoint to allow broader access
+    
+    # DEMO mode: generate synthetic documentation
+    if DEMO_MODE:
+        demo_report = f"""# Colorado AI Act Compliance Documentation
+## Classification: {data.outcome}
+
+### Survey Context
+Based on your survey responses, your organization has been classified under the Colorado AI Act.
+
+### Provided Information
+"""
+        for qid, answer in data.answers.items():
+            if answer:
+                demo_report += f"\n**{qid}**: {answer[:200]}{'...' if len(answer) > 200 else ''}\n"
+        
+        checklist_completed = sum(1 for v in data.checklist.values() if v)
+        demo_report += f"\n### Checklist Progress\nCompleted {checklist_completed} items.\n"
+        
+        return {"report": demo_report, "usage": {"total_tokens": 0}}
+    
+    # Normal path with LLM
+    client = get_openai_client()
+    if client is None:
+        raise HTTPException(status_code=503, detail="OPENAI_API_KEY not set on server")
+    
+    # Format answers for prompt
+    answers_text = ""
+    for qid, answer in data.answers.items():
+        if answer:
+            answers_text += f"\n{qid}: {answer}\n"
+    
+    # Format survey history
+    survey_text = "\n".join([
+        f"Q: {item.get('question', '')}\nA: {item.get('answer', {}).get('label', '')}"
+        for item in data.surveyHistory
+    ])
+    
+    # Outcome titles map
+    outcome_titles = {
+        "outcome1": "Not Subject to the Colorado AI Act",
+        "outcome2": "Exempt Deployer",
+        "outcome3": "Not an AI System Under CAIA",
+        "outcome4": "Not a Developer Under CAIA",
+        "outcome5": "General AI System with Disclosure Duty",
+        "outcome6": "Not a Regulated System",
+        "outcome7": "Developer of High-Risk AI System",
+        "outcome8": "Deployer of High-Risk AI System",
+        "outcome9": "Both Developer and Deployer of High-Risk AI System"
+    }
+    
+    outcome_title = outcome_titles.get(data.outcome, data.outcome)
+    
+    prompt = f"""You are a Colorado AI Act (CAIA) compliance analyst. Generate comprehensive compliance documentation for an organization classified as: {outcome_title}
+
+SURVEY RESPONSES:
+{survey_text}
+
+USER'S DETAILED ANSWERS:
+{answers_text or '<<No specific answers provided>>'}
+
+Based on this information, create a structured compliance document that includes:
+1. Executive Summary of their classification
+2. Specific obligations under CAIA for this classification
+3. Documentation of their provided answers mapped to compliance requirements
+4. Action items for any missing or incomplete information
+5. Recommendations for maintaining compliance
+
+Format the document in markdown with clear sections and actionable guidance.
+"""
+    
+    rsp = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": "You are a precise Colorado AI Act compliance analyst. Provide clear, actionable documentation."},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.2,
+    )
+    
+    report_md = rsp.choices[0].message.content
+    
+    usage = getattr(rsp, "usage", None)
+    if hasattr(usage, "model_dump"):
+        usage = usage.model_dump()
+    
+    return {"report": report_md, "usage": usage}
 
 
 @app.get("/checkup", include_in_schema=False)
