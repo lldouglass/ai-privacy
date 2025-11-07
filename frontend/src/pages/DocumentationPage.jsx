@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
+import html2pdf from "html2pdf.js";
 import "../styles.css";
 
 // Hard-coded questions and checklists from plan.md
@@ -223,6 +226,9 @@ export default function DocumentationPage() {
   const [showResult, setShowResult] = useState(false);
   const [generatedDoc, setGeneratedDoc] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
+  const [editedMarkdown, setEditedMarkdown] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     // Load outcome from sessionStorage
@@ -285,7 +291,10 @@ export default function DocumentationPage() {
         surveyHistory: formattedSurveyHistory
       });
       
-      setGeneratedDoc(response.data.report);
+      const markdown = response.data.report;
+      setGeneratedDoc(markdown);
+      setEditedMarkdown(markdown);
+      setIsEditing(true);
       setShowResult(true);
     } catch (error) {
       console.error('Error generating documentation:', error);
@@ -295,16 +304,61 @@ export default function DocumentationPage() {
     }
   };
 
-  const handleDownload = () => {
-    const blob = new Blob([generatedDoc], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${outcome}_compliance_documentation.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      // Parse markdown to HTML
+      const rawHtml = marked.parse(editedMarkdown);
+      const sanitizedHtml = DOMPurify.sanitize(rawHtml);
+      
+      // Create a temporary container with proper styling for PDF
+      const container = document.createElement('div');
+      container.style.padding = '40px';
+      container.style.fontFamily = 'Arial, sans-serif';
+      container.style.fontSize = '12px';
+      container.style.lineHeight = '1.6';
+      container.style.color = '#000';
+      container.style.backgroundColor = '#fff';
+      container.innerHTML = sanitizedHtml;
+      
+      // Add styling for headings and other elements
+      const style = document.createElement('style');
+      style.textContent = `
+        h1 { font-size: 24px; margin-top: 20px; margin-bottom: 10px; }
+        h2 { font-size: 20px; margin-top: 18px; margin-bottom: 8px; }
+        h3 { font-size: 16px; margin-top: 14px; margin-bottom: 6px; }
+        h4 { font-size: 14px; margin-top: 12px; margin-bottom: 6px; }
+        p { margin-bottom: 10px; }
+        ul, ol { margin-bottom: 10px; padding-left: 30px; }
+        li { margin-bottom: 5px; }
+        code { background-color: #f4f4f4; padding: 2px 4px; border-radius: 3px; }
+        pre { background-color: #f4f4f4; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        blockquote { border-left: 4px solid #ddd; padding-left: 15px; margin-left: 0; color: #666; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f4f4f4; }
+      `;
+      container.appendChild(style);
+      
+      // Configure html2pdf options
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `${outcome}_compliance_documentation.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+      
+      // Generate and download PDF
+      await html2pdf().set(opt).from(container).save();
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const handleBackToResults = () => {
@@ -335,99 +389,256 @@ export default function DocumentationPage() {
         padding: '2rem'
       }}>
         <div style={{
-          maxWidth: '1200px',
+          maxWidth: '1400px',
           margin: '0 auto',
-          background: 'var(--panel)',
-          borderRadius: '16px',
-          border: '1px solid var(--border)',
-          padding: '3rem',
-          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)'
+          display: 'grid',
+          gridTemplateColumns: data.checklist.length > 0 ? '1fr 350px' : '1fr',
+          gap: '2rem'
         }}>
-          <h1 style={{
-            fontSize: '2rem',
-            fontWeight: '700',
-            color: 'var(--text)',
-            marginBottom: '1rem'
-          }}>
-            Generated Documentation
-          </h1>
-          
+          {/* Main content area - markdown editor/preview */}
           <div style={{
-            background: 'var(--bg-elev)',
+            background: 'var(--panel)',
+            borderRadius: '16px',
             border: '1px solid var(--border)',
-            borderRadius: '12px',
-            padding: '2rem',
-            marginBottom: '2rem',
-            whiteSpace: 'pre-wrap',
-            fontFamily: 'monospace',
-            fontSize: '0.875rem',
-            lineHeight: '1.6',
-            maxHeight: '600px',
-            overflow: 'auto'
+            padding: '3rem',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)'
           }}>
-            {generatedDoc}
+            <h1 style={{
+              fontSize: '2rem',
+              fontWeight: '700',
+              color: 'var(--text)',
+              marginBottom: '1rem'
+            }}>
+              Generated Documentation
+            </h1>
+
+            {/* Edit/Preview Toggle Button */}
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem',
+              marginBottom: '1rem'
+            }}>
+              <button
+                onClick={() => setIsEditing(true)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: isEditing ? 'var(--primary)' : 'transparent',
+                  border: `1px solid var(--primary)`,
+                  borderRadius: '8px',
+                  color: isEditing ? '#fff' : 'var(--primary)',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  fontFamily: 'inherit'
+                }}
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => setIsEditing(false)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: !isEditing ? 'var(--primary)' : 'transparent',
+                  border: `1px solid var(--primary)`,
+                  borderRadius: '8px',
+                  color: !isEditing ? '#fff' : 'var(--primary)',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  fontFamily: 'inherit'
+                }}
+              >
+                Preview
+              </button>
+            </div>
+            
+            {/* Markdown Editor or Preview */}
+            {isEditing ? (
+              <textarea
+                value={editedMarkdown}
+                onChange={(e) => setEditedMarkdown(e.target.value)}
+                style={{
+                  width: '100%',
+                  minHeight: '500px',
+                  padding: '1.5rem',
+                  background: 'var(--bg-elev)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  color: 'var(--text)',
+                  fontSize: '0.875rem',
+                  fontFamily: 'monospace',
+                  lineHeight: '1.6',
+                  resize: 'vertical',
+                  marginBottom: '2rem'
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  background: 'var(--bg-elev)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  padding: '2rem',
+                  marginBottom: '2rem',
+                  minHeight: '500px',
+                  maxHeight: '700px',
+                  overflow: 'auto',
+                  color: 'var(--text)',
+                  fontSize: '0.875rem',
+                  lineHeight: '1.6'
+                }}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(marked.parse(editedMarkdown))
+                }}
+              />
+            )}
+
+            {/* Action buttons */}
+            <div style={{
+              display: 'flex',
+              gap: '1rem',
+              flexWrap: 'wrap',
+              justifyContent: 'space-between'
+            }}>
+              <button
+                onClick={() => setShowResult(false)}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: 'transparent',
+                  border: '1px solid var(--border)',
+                  borderRadius: '10px',
+                  color: 'var(--text)',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  fontFamily: 'inherit'
+                }}
+              >
+                ← Back to Questions
+              </button>
+
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <button
+                  onClick={handleDownload}
+                  disabled={isDownloading}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: isDownloading ? 'var(--border)' : 'linear-gradient(90deg, var(--primary-700), var(--primary))',
+                    border: 'none',
+                    borderRadius: '10px',
+                    color: '#fff',
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    cursor: isDownloading ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s ease',
+                    fontFamily: 'inherit',
+                    boxShadow: isDownloading ? 'none' : '0 4px 14px rgba(99, 102, 241, 0.25)'
+                  }}
+                >
+                  {isDownloading ? 'Generating PDF...' : 'Download PDF'}
+                </button>
+
+                <button
+                  onClick={handleStartOver}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: 'transparent',
+                    border: '1px solid var(--border)',
+                    borderRadius: '10px',
+                    color: 'var(--text)',
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    fontFamily: 'inherit'
+                  }}
+                >
+                  Start Over
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div style={{
-            display: 'flex',
-            gap: '1rem',
-            flexWrap: 'wrap'
-          }}>
-            <button
-              onClick={handleDownload}
-              style={{
-                padding: '1rem 2rem',
-                background: 'linear-gradient(90deg, var(--primary-700), var(--primary))',
-                border: 'none',
-                borderRadius: '10px',
-                color: '#fff',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                fontFamily: 'inherit',
-                boxShadow: '0 4px 14px rgba(99, 102, 241, 0.25)'
-              }}
-            >
-              Download Documentation
-            </button>
-
-            <button
-              onClick={() => setShowResult(false)}
-              style={{
-                padding: '1rem 2rem',
-                background: 'transparent',
-                border: '1px solid var(--primary)',
-                borderRadius: '10px',
+          {/* Checklist sidebar - only shown if checklist exists */}
+          {data.checklist.length > 0 && (
+            <div style={{
+              background: 'var(--panel)',
+              borderRadius: '16px',
+              border: '1px solid var(--border)',
+              padding: '2rem',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+              height: 'fit-content',
+              position: 'sticky',
+              top: '2rem'
+            }}>
+              <h2 style={{
+                fontSize: '1.25rem',
+                fontWeight: '700',
                 color: 'var(--text)',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                fontFamily: 'inherit'
-              }}
-            >
-              Back to Edit
-            </button>
+                marginBottom: '1.5rem'
+              }}>
+                Compliance Checklist
+              </h2>
 
-            <button
-              onClick={handleStartOver}
-              style={{
-                padding: '1rem 2rem',
-                background: 'transparent',
-                border: '1px solid var(--border)',
-                borderRadius: '10px',
-                color: 'var(--text)',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                fontFamily: 'inherit'
-              }}
-            >
-              Start Over
-            </button>
-          </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {data.checklist.map((item, index) => (
+                  <label
+                    key={index}
+                    style={{
+                      display: 'flex',
+                      gap: '0.75rem',
+                      cursor: 'pointer',
+                      padding: '0.75rem',
+                      background: checklist[index] ? 'rgba(34, 197, 94, 0.1)' : 'var(--bg-elev)',
+                      border: `1px solid ${checklist[index] ? 'var(--ok)' : 'var(--border)'}`,
+                      borderRadius: '8px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checklist[index] || false}
+                      onChange={() => handleChecklistToggle(index)}
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        marginTop: '2px'
+                      }}
+                    />
+                    <span style={{
+                      fontSize: '0.875rem',
+                      color: 'var(--text)',
+                      lineHeight: '1.5'
+                    }}>
+                      {item}
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              <div style={{
+                marginTop: '1.5rem',
+                padding: '1rem',
+                background: 'var(--bg-elev)',
+                borderRadius: '8px',
+                border: '1px solid var(--border)'
+              }}>
+                <p style={{
+                  fontSize: '0.75rem',
+                  color: 'var(--muted)',
+                  margin: 0,
+                  textAlign: 'center'
+                }}>
+                  {Object.values(checklist).filter(Boolean).length} of {data.checklist.length} completed
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
