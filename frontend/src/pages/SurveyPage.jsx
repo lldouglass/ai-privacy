@@ -299,13 +299,26 @@ export default function SurveyPage() {
     }
   };
 
+  const handleGenerateDocumentation = () => {
+    const classification = getRiskClassification();
+    const allAnswers = { ...answers, ...currentStepAnswers };
+    
+    // Store data in sessionStorage for DocumentationPage
+    sessionStorage.setItem('riskLevel', classification.outcome);
+    sessionStorage.setItem('surveyResults', JSON.stringify(allAnswers));
+    
+    // Navigate to documentation page
+    navigate('/documentation');
+  };
+
   // Calculate risk classification
   const getRiskClassification = () => {
     if (answers.q0_1 === 'no') {
       return {
         title: 'Not Subject to Colorado AI Act',
         color: '#22c55e',
-        description: 'Your organization does not do business in Colorado.'
+        description: 'Your organization does not do business in Colorado.',
+        outcome: 'outcome1'
       };
     }
 
@@ -318,7 +331,8 @@ export default function SurveyPage() {
       return {
         title: 'Not a Regulated System',
         color: '#22c55e',
-        description: 'Your AI system is not high-risk and not consumer-facing.'
+        description: 'Your AI system is not high-risk and not consumer-facing.',
+        outcome: 'outcome6'
       };
     }
 
@@ -326,24 +340,31 @@ export default function SurveyPage() {
       return {
         title: 'General AI with Disclosure Duty',
         color: '#f59e0b',
-        description: 'You must disclose to consumers that they are interacting with AI.'
+        description: 'You must disclose to consumers that they are interacting with AI.',
+        outcome: 'outcome5'
       };
     }
 
     if (isHighRisk) {
       const roleText = role === 'both' ? 'Developer & Deployer' :
                       role === 'developer' ? 'Developer' : 'Deployer';
+      let outcome = 'outcome8'; // Default to Deployer
+      if (role === 'both') outcome = 'outcome9';
+      else if (role === 'developer') outcome = 'outcome7';
+      
       return {
         title: `High-Risk ${roleText}`,
         color: '#ef4444',
-        description: 'You have full compliance duties under the Colorado AI Act.'
+        description: 'You have full compliance duties under the Colorado AI Act.',
+        outcome: outcome
       };
     }
 
     return {
       title: 'General AI System',
       color: '#22c55e',
-      description: 'Basic compliance requirements apply.'
+      description: 'Basic compliance requirements apply.',
+      outcome: 'outcome6'
     };
   };
 
@@ -506,6 +527,26 @@ export default function SurveyPage() {
               }}
             >
               Download Documents
+            </button>
+
+            <button
+              onClick={handleGenerateDocumentation}
+              style={{
+                flex: '1',
+                minWidth: '200px',
+                padding: '1rem 2rem',
+                background: 'linear-gradient(90deg, var(--primary-700), var(--primary))',
+                border: 'none',
+                borderRadius: '10px',
+                color: '#fff',
+                fontSize: '1.125rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                boxShadow: '0 4px 14px rgba(99, 102, 241, 0.25)'
+              }}
+            >
+              Generate Documentation →
             </button>
 
             <button
