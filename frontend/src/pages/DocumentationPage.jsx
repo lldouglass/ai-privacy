@@ -4,6 +4,7 @@ import axios from "axios";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 import html2pdf from "html2pdf.js";
+import ComplianceChatbot from "../components/ComplianceChatbot";
 import "../styles.css";
 
 // Hard-coded questions and checklists from plan.md
@@ -652,11 +653,11 @@ export default function DocumentationPage() {
       padding: '2rem'
     }}>
       <div style={{
-        maxWidth: '1400px',
+        maxWidth: '1800px',
         margin: '0 auto',
         display: 'grid',
-        gridTemplateColumns: hasQuestions ? '1fr 350px' : '1fr',
-        gap: '2rem'
+        gridTemplateColumns: data.checklist.length > 0 ? '1fr 300px 400px' : '1fr 400px',
+        gap: '1.5rem'
       }}>
         {/* Main content area */}
         <div style={{
@@ -898,6 +899,22 @@ export default function DocumentationPage() {
             </div>
           </div>
         )}
+
+        {/* Chatbot Assistant */}
+        <div style={{
+          height: '800px',
+          position: 'sticky',
+          top: '2rem'
+        }}>
+          <ComplianceChatbot
+            userContext={{
+              outcome: outcome,
+              role: outcome === 'outcome7' ? 'developer' : outcome === 'outcome8' ? 'deployer' : outcome === 'outcome9' ? 'both' : 'unknown',
+              answers: answers,
+              checklist: checklist
+            }}
+          />
+        </div>
       </div>
     </div>
   );
