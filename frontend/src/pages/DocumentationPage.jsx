@@ -6,12 +6,11 @@ import DOMPurify from "dompurify";
 import html2pdf from "html2pdf.js";
 import "../styles.css";
 
-// Hard-coded questions and checklists from plan.md
+// Hard-coded questions (checklists are now dynamically generated)
 const outcomeData = {
   outcome1: {
     title: "Not Subject to the Colorado AI Act",
     questions: [],
-    checklist: [],
     message: "Your classification doesn't require strict documentation. Make sure to review the checklist to see the full compliance requirements."
   },
   outcome2: {
@@ -33,24 +32,16 @@ const outcomeData = {
         id: "q4",
         text: "What information are you prepared to share with a consumer who questions a decision? This will help draft a template response that leverages the documentation provided by the system's developer."
       }
-    ],
-    checklist: [
-      "Verify and Document Eligibility: Internally confirm and document that your business meets all four criteria for the small business exemption (fewer than 50 full-time employees, no use of own data for training, use for intended purpose, and system learning is not based on your data).",
-      "Review Developer Documentation: Obtain, review, and securely store all documentation provided by the AI system's developer, including statements on purpose, limitations, and risk mitigation.",
-      "Establish Internal Policy: Create a simple internal policy for employees on the proper and intended use of the AI system, consistent with the developer's guidelines.",
-      "Designate Responsibility: Assign a specific person or team within your organization to handle all consumer inquiries related to AI-assisted decisions."
     ]
   },
   outcome3: {
     title: "Not an AI System Under CAIA",
     questions: [],
-    checklist: [],
     message: "Your classification doesn't require strict documentation. Make sure to review the checklist to see the full compliance requirements."
   },
   outcome4: {
     title: "Not a Developer Under CAIA",
     questions: [],
-    checklist: [],
     message: "Your classification doesn't require strict documentation. Make sure to review the checklist to see the full compliance requirements."
   },
   outcome5: {
@@ -73,17 +64,11 @@ const outcomeData = {
         text: "If you have determined that a disclosure is not needed for a particular system, provide the detailed justification. Why would a reasonable person find it obvious they are interacting with AI? If there is not obvious reason or you are choosing to add an explicit disclosure, please put N/A.",
         note: "If you answer anything except N/A, you don't need to answer the 2nd and 3rd questions."
       }
-    ],
-    checklist: [
-      "Inventory AI Systems: Identify and create an internal list of all consumer-facing systems that use AI to interact with consumers (e.g., chatbots, virtual assistants, automated email responders).",
-      "Conduct 'Obviousness' Assessment: For each system, conduct and internally document an assessment of whether a reasonable person would obviously know they are interacting with an AI.",
-      "Implement Disclosure Mechanism: For any system where the AI nature is not obvious, technically implement the disclosure mechanism so that it is presented clearly and conspicuously at or before the start of the interaction."
     ]
   },
   outcome6: {
     title: "Not a Regulated System",
     questions: [],
-    checklist: [],
     message: "Your classification doesn't require strict documentation. Make sure to review the checklist to see the full compliance requirements."
   },
   outcome7: {
@@ -129,11 +114,6 @@ const outcomeData = {
         id: "q10",
         text: "Provide the summary text for your public website, describing your company's overarching approach to managing the risks of algorithmic discrimination."
       }
-    ],
-    checklist: [
-      "Implement 'Reasonable Care' Processes: Establish and document your internal processes for identifying, testing for, and mitigating foreseeable discrimination risks throughout the AI system's lifecycle. This includes conducting fairness audits and adversarial testing.",
-      "Establish Post-Market Monitoring: Create a formal process to receive and analyze feedback from deployers and other sources regarding potential discrimination caused by the system after deployment.",
-      "Develop Incident Response Protocol: Implement a documented, step-by-step plan for notifying the Colorado Attorney General and all known deployers within the 90-day statutory deadline if you discover the system has caused algorithmic discrimination."
     ]
   },
   outcome8: {
@@ -187,12 +167,6 @@ const outcomeData = {
         id: "q12",
         text: "Provide the exact text explaining the consumer's right to appeal an adverse decision, including the step-by-step instructions they must follow."
       }
-    ],
-    checklist: [
-      "Establish Risk Management Program: Develop, implement, and maintain a formal Risk Management Policy and Program, specifying principles, processes, and personnel. This program should be aligned with a recognized framework like the NIST AI RMF.",
-      "Conduct Annual System Review: Beyond the formal impact assessment, conduct and document an annual review of each deployed high-risk system to ensure it is not causing algorithmic discrimination.",
-      "Implement Consumer Rights Processes: Operationally implement the consumer rights you will offer, including the process for data correction and the human review workflow for appeals.",
-      "Develop Incident Response Protocol: Create a documented, step-by-step plan for notifying the Colorado Attorney General within 90 days of discovering that the deployed system has caused algorithmic discrimination."
     ]
   },
   outcome9: {
@@ -207,12 +181,6 @@ const outcomeData = {
         text: "How does your organization manage and resolve potential internal conflicts between development goals (e.g., model accuracy) and deployment responsibilities (e.g., fairness, consumer rights)?"
       }
     ],
-    checklist: [
-      "Establish Unified Governance: Create a single, integrated Risk Management Policy and Program that governs the entire AI lifecycle, from initial design and data collection through deployment and ongoing monitoring.",
-      "Integrate Workflows: Establish clear internal processes that ensure your 'Deployer' teams have full access to and understanding of the technical details, limitations, and risk assessments produced by your 'Developer' teams.",
-      "Conduct Comprehensive Testing: Perform and document rigorous technical analysis, performance evaluation, and bias testing required of a developer, and use this as a primary input for the Impact Assessments required of a deployer.",
-      "Implement Unified Incident Response: Create a single, streamlined protocol for notifying the Attorney General within 90 days of discovering that the system has caused algorithmic discrimination."
-    ],
     additionalNote: "Please answer all questions listed for both Developer (outcome7) and Deployer (outcome8) sections."
   }
 };
@@ -221,7 +189,8 @@ export default function DocumentationPage() {
   const navigate = useNavigate();
   const [outcome, setOutcome] = useState(null);
   const [answers, setAnswers] = useState({});
-  const [checklist, setChecklist] = useState({});
+  const [checklist, setChecklist] = useState({}); // For tracking checked/unchecked state
+  const [checklistItems, setChecklistItems] = useState([]); // For storing the dynamic checklist items
   const [currentStep, setCurrentStep] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [generatedDoc, setGeneratedDoc] = useState("");
@@ -239,12 +208,20 @@ export default function DocumentationPage() {
       // Load saved answers and checklist if they exist
       const savedAnswers = sessionStorage.getItem('documentationAnswers');
       const savedChecklist = sessionStorage.getItem('documentationChecklist');
+      const savedChecklistItems = sessionStorage.getItem('documentationChecklistItems');
       
       if (savedAnswers) {
         setAnswers(JSON.parse(savedAnswers));
       }
       if (savedChecklist) {
         setChecklist(JSON.parse(savedChecklist));
+      }
+      if (savedChecklistItems) {
+        setChecklistItems(JSON.parse(savedChecklistItems));
+        // If we have saved items, we can assume we should show the result view
+        // provided we have generated doc content (or we might want to clear it?)
+        // But logic for showing result depends on if user has clicked generate.
+        // We won't auto-show result unless we persist the report too, which we don't seem to do in the original code (only answers).
       }
     } else {
       // No outcome found, redirect to survey
@@ -265,6 +242,12 @@ export default function DocumentationPage() {
     }
   }, [checklist]);
 
+  useEffect(() => {
+    if (checklistItems.length > 0) {
+      sessionStorage.setItem('documentationChecklistItems', JSON.stringify(checklistItems));
+    }
+  }, [checklistItems]);
+
   const handleAnswerChange = (questionId, value) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
   };
@@ -284,16 +267,34 @@ export default function DocumentationPage() {
         answer: Array.isArray(value) ? value.join(', ') : value
       }));
       
-      const response = await axios.post('/api/generate-outcome-documentation', {
-        outcome,
-        answers,
-        checklist,
-        surveyHistory: formattedSurveyHistory
-      });
+      // Run generation in parallel
+      const [docResponse, checklistResponse] = await Promise.all([
+        axios.post('/api/generate-outcome-documentation', {
+          outcome,
+          answers,
+          checklist: {}, // Not used by backend for generation
+          surveyHistory: formattedSurveyHistory
+        }),
+        axios.post('/api/generate-checklist', {
+          outcome,
+          answers,
+          checklist: {},
+          surveyHistory: formattedSurveyHistory
+        })
+      ]);
       
-      const markdown = response.data.report;
+      // Handle documentation response
+      const markdown = docResponse.data.report;
       setGeneratedDoc(markdown);
       setEditedMarkdown(markdown);
+
+      // Handle checklist response
+      if (checklistResponse.data.checklist) {
+        setChecklistItems(checklistResponse.data.checklist);
+        // Reset checked state when generating new checklist
+        setChecklist({});
+      }
+      
       setIsEditing(true);
       setShowResult(true);
     } catch (error) {
@@ -368,6 +369,7 @@ export default function DocumentationPage() {
   const handleStartOver = () => {
     sessionStorage.removeItem('documentationAnswers');
     sessionStorage.removeItem('documentationChecklist');
+    sessionStorage.removeItem('documentationChecklistItems');
     sessionStorage.removeItem('surveyResults');
     sessionStorage.removeItem('riskLevel');
     navigate('/survey');
@@ -392,7 +394,7 @@ export default function DocumentationPage() {
           maxWidth: '1400px',
           margin: '0 auto',
           display: 'grid',
-          gridTemplateColumns: data.checklist.length > 0 ? '1fr 350px' : '1fr',
+          gridTemplateColumns: checklistItems.length > 0 ? '1fr 350px' : '1fr',
           gap: '2rem'
         }}>
           {/* Main content area - markdown editor/preview */}
@@ -563,7 +565,7 @@ export default function DocumentationPage() {
           </div>
 
           {/* Checklist sidebar - only shown if checklist exists */}
-          {data.checklist.length > 0 && (
+          {checklistItems.length > 0 && (
             <div style={{
               background: 'var(--panel)',
               borderRadius: '16px',
@@ -584,7 +586,7 @@ export default function DocumentationPage() {
               </h2>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {data.checklist.map((item, index) => (
+                {checklistItems.map((item, index) => (
                   <label
                     key={index}
                     style={{
@@ -634,7 +636,7 @@ export default function DocumentationPage() {
                   margin: 0,
                   textAlign: 'center'
                 }}>
-                  {Object.values(checklist).filter(Boolean).length} of {data.checklist.length} completed
+                  {Object.values(checklist).filter(Boolean).length} of {checklistItems.length} completed
                 </p>
               </div>
             </div>
@@ -821,83 +823,14 @@ export default function DocumentationPage() {
           </div>
         </div>
 
-        {/* Checklist sidebar */}
-        {data.checklist.length > 0 && (
-          <div style={{
-            background: 'var(--panel)',
-            borderRadius: '16px',
-            border: '1px solid var(--border)',
-            padding: '2rem',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
-            height: 'fit-content',
-            position: 'sticky',
-            top: '2rem'
-          }}>
-            <h2 style={{
-              fontSize: '1.25rem',
-              fontWeight: '700',
-              color: 'var(--text)',
-              marginBottom: '1.5rem'
-            }}>
-              Compliance Checklist
-            </h2>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {data.checklist.map((item, index) => (
-                <label
-                  key={index}
-                  style={{
-                    display: 'flex',
-                    gap: '0.75rem',
-                    cursor: 'pointer',
-                    padding: '0.75rem',
-                    background: checklist[index] ? 'rgba(34, 197, 94, 0.1)' : 'var(--bg-elev)',
-                    border: `1px solid ${checklist[index] ? 'var(--ok)' : 'var(--border)'}`,
-                    borderRadius: '8px',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checklist[index] || false}
-                    onChange={() => handleChecklistToggle(index)}
-                    style={{
-                      width: '20px',
-                      height: '20px',
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                      marginTop: '2px'
-                    }}
-                  />
-                  <span style={{
-                    fontSize: '0.875rem',
-                    color: 'var(--text)',
-                    lineHeight: '1.5'
-                  }}>
-                    {item}
-                  </span>
-                </label>
-              ))}
-            </div>
-
-            <div style={{
-              marginTop: '1.5rem',
-              padding: '1rem',
-              background: 'var(--bg-elev)',
-              borderRadius: '8px',
-              border: '1px solid var(--border)'
-            }}>
-              <p style={{
-                fontSize: '0.75rem',
-                color: 'var(--muted)',
-                margin: 0,
-                textAlign: 'center'
-              }}>
-                {Object.values(checklist).filter(Boolean).length} of {data.checklist.length} completed
-              </p>
-            </div>
-          </div>
-        )}
+        {/* Checklist sidebar - Dynamic now, but originally showed static checklists here. 
+            Since we want to "Remove the checklist during the answering questions phase", 
+            we just don't render it here unless showResult is true (which is handled in the conditional block above).
+            Or if we want it to be visible during questions only if it was already generated... 
+            But the requirement says "Remove the checklist during the answering questions phase. The checklist will be generated after all questions are answered."
+            
+            So we simply remove the sidebar from the "questions" view entirely.
+        */}
       </div>
     </div>
   );

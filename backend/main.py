@@ -601,6 +601,99 @@ Generate all required artifacts now, one after another, with no additional comme
     return {"report": report_md, "usage": usage}
 
 
+@app.post("/api/generate-checklist")
+def generate_checklist(data: OutcomeDocumentationInput, request: Request):
+    """Generate a dynamic compliance checklist based on survey outcome and user answers."""
+    _rate_limit(request.client.host)
+    
+    # Load outcome requirements
+    outcome_title, requirements_text = _load_outcome_requirements(data.outcome)
+
+    # DEMO mode
+    if DEMO_MODE:
+        return {
+            "checklist": [
+                "Verify small business exemption criteria",
+                "Review developer documentation",
+                "Create internal AI use policy",
+                "Designate consumer inquiry contact"
+            ],
+            "usage": {"total_tokens": 0}
+        }
+
+    # Not regulated outcomes -> empty checklist or simple message?
+    # The plan says "Generate concise... list of action steps that are required for the business to be fully compliant."
+    # If not regulated, checklist might be empty or just "Monitor for changes".
+    # However, usually we just want to skip LLM if not regulated.
+    if data.outcome in ["outcome1", "outcome3", "outcome4"]:
+         return {
+            "checklist": ["Monitor operations for changes that might trigger compliance obligations."],
+            "usage": {"total_tokens": 0}
+        }
+
+    client = get_openai_client()
+    if client is None:
+        raise HTTPException(status_code=503, detail="OPENAI_API_KEY not set on server")
+
+    # Format answers
+    answers_text = ""
+    if data.answers:
+        for qid, answer in data.answers.items():
+            if answer:
+                answers_text += f"\n**{qid}**: {answer}\n"
+
+    prompt = f"""You are an expert legal compliance assistant for the Colorado AI Act (CAIA).
+
+CLASSIFICATION: {outcome_title}
+
+LEGAL REQUIREMENTS:
+{requirements_text}
+
+USER'S DETAILED ANSWERS:
+{answers_text or '<<No specific answers provided yet>>'}
+
+TASK:
+Generate a concise, bullet-point list of action steps required for this business to be fully compliant.
+- Each item must be a singular responsibility.
+- Each item must be 15 words or less.
+- Address specific legal requirements from the provided text.
+- Do NOT include random actions or guessing.
+- ONLY include the bullet list.
+- Denote bullet points with "*".
+
+Example Output:
+* Create Deployer safety plan
+* Designate consumer inquiry contact
+* Implement bias testing protocol
+"""
+
+    rsp = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": "You are a precise legal assistant. Output only a bulleted list."},
+            {"role": "user", "content": prompt},
+        ]
+    )
+
+    content = rsp.choices[0].message.content
+    
+    # Parse bullet points
+    checklist_items = []
+    for line in content.split('\n'):
+        line = line.strip()
+        if line.startswith('*') or line.startswith('-'):
+            # Remove the bullet and whitespace
+            clean_line = line.lstrip('*- ').strip()
+            if clean_line:
+                checklist_items.append(clean_line)
+    
+    usage = getattr(rsp, "usage", None)
+    if hasattr(usage, "model_dump"):
+        usage = usage.model_dump()
+
+    return {"checklist": checklist_items, "usage": usage}
+
+
 # ── Survey-based document generation ──────────────────────────────────────
 class SurveyAnswers(BaseModel):
     """Survey answers from the comprehensive CAIA compliance assessment"""
