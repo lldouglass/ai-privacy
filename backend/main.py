@@ -220,8 +220,8 @@ MODEL METADATA:
         messages=[
             {"role": "system", "content": "Precise compliance analyst. No overclaiming."},
             {"role": "user", "content": prompt},
-        ],
-        temperature=0.15,
+        ]
+        # temperature=0.15,
     )
     report_md = rsp.choices[0].message.content
 
@@ -347,50 +347,15 @@ def delete_project(project_id: int, request: Request):
         s.delete(obj); s.commit()
     return {"deleted": project_id}
 
-@app.post("/api/generate-outcome-documentation")
-def generate_outcome_documentation(data: OutcomeDocumentationInput, request: Request):
-    """Generate compliance documentation based on survey outcome and user answers."""
-    _rate_limit(request.client.host)
-    # Note: not checking invite for this endpoint to allow broader access
+# ── Outcome Documentation Helpers ────────────────────────────────────────
+def _load_outcome_requirements(outcome: str) -> tuple[str, str]:
+    """
+    Load the legal requirements markdown file for a given outcome.
     
-    # DEMO mode: generate synthetic documentation
-    if DEMO_MODE:
-        demo_report = f"""# Colorado AI Act Compliance Documentation
-## Classification: {data.outcome}
-
-### Survey Context
-Based on your survey responses, your organization has been classified under the Colorado AI Act.
-
-### Provided Information
-"""
-        for qid, answer in data.answers.items():
-            if answer:
-                demo_report += f"\n**{qid}**: {answer[:200]}{'...' if len(answer) > 200 else ''}\n"
-        
-        checklist_completed = sum(1 for v in data.checklist.values() if v)
-        demo_report += f"\n### Checklist Progress\nCompleted {checklist_completed} items.\n"
-        
-        return {"report": demo_report, "usage": {"total_tokens": 0}}
-    
-    # Normal path with LLM
-    client = get_openai_client()
-    if client is None:
-        raise HTTPException(status_code=503, detail="OPENAI_API_KEY not set on server")
-    
-    # Format answers for prompt
-    answers_text = ""
-    for qid, answer in data.answers.items():
-        if answer:
-            answers_text += f"\n{qid}: {answer}\n"
-    
-    # Format survey history
-    survey_text = "\n".join([
-        f"{item.get('question', '')}: {item.get('answer', '')}"
-        for item in data.surveyHistory
-        if item.get('answer')
-    ])
-    
-    # Outcome titles map
+    Returns:
+        tuple: (outcome_title, requirements_text)
+        For outcomes without files, returns a "not regulated" summary.
+    """
     outcome_titles = {
         "outcome1": "Not Subject to the Colorado AI Act",
         "outcome2": "Exempt Deployer",
@@ -403,33 +368,228 @@ Based on your survey responses, your organization has been classified under the 
         "outcome9": "Both Developer and Deployer of High-Risk AI System"
     }
     
-    outcome_title = outcome_titles.get(data.outcome, data.outcome)
+    outcome_files = {
+        "outcome2": "outcome2_exempt_deployer.md",
+        "outcome5": "outcome5_general_ai_disclosure.md",
+        "outcome6": "outcome6_not_regulated_system.md",
+        "outcome7": "outcome7_developer_high_risk.md",
+        "outcome8": "outcome8_deployer_high_risk.md",
+        "outcome9": "outcome9_both_developer_deployer.md"
+    }
     
-    prompt = f"""You are a Colorado AI Act (CAIA) compliance analyst. Generate comprehensive compliance documentation for an organization classified as: {outcome_title}
+    # Summaries for outcomes without dedicated markdown files
+    not_regulated_summaries = {
+        "outcome1": """# Not Subject to the Colorado AI Act
 
-SURVEY RESPONSES:
-{survey_text}
+## Overview
+
+Your organization is not subject to the Colorado Artificial Intelligence Act (CAIA) because you do not conduct business in Colorado.
+
+## What This Means
+
+The Colorado AI Act applies only to persons or entities that "do business in Colorado." Since your operations do not meet this threshold, you are not required to comply with CAIA's requirements for developers or deployers of AI systems.
+
+## No Compliance Obligations
+
+You have no documentation, disclosure, risk management, or impact assessment obligations under CAIA at this time.
+
+## If Your Situation Changes
+
+If you begin doing business in Colorado in the future, you should reassess your obligations under CAIA based on:
+- Whether you develop or deploy AI systems
+- Whether those systems are high-risk
+- Whether they are used to make consequential decisions
+
+## Related Considerations
+
+While CAIA does not apply, you may still be subject to:
+- Federal AI and consumer protection regulations
+- Other state laws where you do business
+- Industry-specific AI governance requirements
+""",
+        "outcome3": """# Not an AI System Under CAIA
+
+## Overview
+
+The technology or system you described does not qualify as an "artificial intelligence system" under the Colorado AI Act's definition.
+
+## CAIA's Definition of AI System
+
+Under § 6-1-1701(2), an "artificial intelligence system" means any machine-based system that, for any explicit or implicit objective, infers from the inputs the system receives how to generate outputs, including content, decisions, predictions, or recommendations, that can influence physical or virtual environments.
+
+## Why Your System Is Not Covered
+
+Your system does not meet this definition because it likely:
+- Does not use machine learning or inference
+- Follows deterministic, rule-based logic
+- Does not generate outputs through learned patterns
+- Is a traditional software application
+
+## No Compliance Obligations
+
+Since your system is not an AI system under CAIA, you have no obligations under the Act.
+
+## Examples of Non-AI Systems
+
+Systems that are typically not considered AI include:
+- Traditional databases and queries
+- Rule-based decision trees with no learning component
+- Calculators and spreadsheets
+- Static algorithms without adaptive components
+
+## If Your Technology Changes
+
+If you modify your system to incorporate machine learning, neural networks, or other AI capabilities, you should reassess whether CAIA applies.
+""",
+        "outcome4": """# Not a Developer Under CAIA
+
+## Overview
+
+Your organization is not considered a "developer" under the Colorado Artificial Intelligence Act.
+
+## CAIA's Definition of Developer
+
+Under § 6-1-1701(4), a "developer" means a person doing business in Colorado that develops or intentionally and substantially modifies an artificial intelligence system.
+
+## Why You Are Not a Developer
+
+You are not a developer because you:
+- Do not create AI systems from scratch
+- Do not substantially modify existing AI systems
+- Only deploy or use AI systems created by others
+- Make only minor configurations or customizations
+
+## Potential Deployer Obligations
+
+While you are not a developer, you may still have obligations as a **deployer** if you use high-risk AI systems to make consequential decisions in Colorado.
+
+A "deployer" is a person doing business in Colorado that deploys a high-risk artificial intelligence system.
+
+## Next Steps
+
+If you deploy AI systems (created by others) for consequential decisions, assess whether:
+- The AI systems are high-risk
+- You qualify as a deployer
+- You are exempt from deployer obligations
+
+See the relevant outcomes for deployers (Outcome 2, 8, or 9) for more information.
+
+## No Developer Documentation Required
+
+You do not need to create developer documentation, conduct pre-deployment testing, or notify deployers of risks, as these are developer-specific obligations.
+"""
+    }
+    
+    outcome_title = outcome_titles.get(outcome, outcome)
+    
+    # Check if outcome has a dedicated markdown file
+    if outcome in outcome_files:
+        regs_dir = Path(__file__).parent / "regs"
+        file_path = regs_dir / outcome_files[outcome]
+        try:
+            requirements_text = file_path.read_text(encoding="utf-8")
+            return outcome_title, requirements_text
+        except Exception as e:
+            log.warning(f"Failed to load outcome file {file_path}: {e}")
+            return outcome_title, f"# {outcome_title}\n\n*Requirements file could not be loaded. Please contact support.*"
+    
+    # Return not-regulated summary for outcomes without files
+    if outcome in not_regulated_summaries:
+        return outcome_title, not_regulated_summaries[outcome]
+    
+    # Fallback for unknown outcomes
+    return outcome_title, f"# {outcome_title}\n\n*Classification details not available.*"
+
+@app.post("/api/generate-outcome-documentation")
+def generate_outcome_documentation(data: OutcomeDocumentationInput, request: Request):
+    """Generate compliance documentation based on survey outcome and user answers."""
+    _rate_limit(request.client.host)
+    # Note: not checking invite for this endpoint to allow broader access
+    
+    # Load outcome requirements from markdown files
+    outcome_title, requirements_text = _load_outcome_requirements(data.outcome)
+    
+    # DEMO mode: return outcome requirements with sample answers
+    if DEMO_MODE:
+        demo_report = f"""# {outcome_title}
+
+{requirements_text}
+
+---
+
+## Your Provided Information
+
+"""
+        for qid, answer in data.answers.items():
+            if answer:
+                demo_report += f"**{qid}**: {answer[:200]}{'...' if len(answer) > 200 else ''}\n\n"
+        
+        if not data.answers:
+            demo_report += "*No specific answers provided yet.*\n"
+        
+        demo_report += "\n*This is demo mode. In production, AI-generated personalized documentation would appear here.*"
+        
+        return {"report": demo_report, "usage": {"total_tokens": 0}}
+    
+    # Check if outcome is "not regulated" (outcomes 1, 3, 4)
+    # For these, return the static summary without LLM generation
+    if data.outcome in ["outcome1", "outcome3", "outcome4"]:
+        return {
+            "report": requirements_text,
+            "usage": {"total_tokens": 0, "prompt_tokens": 0, "completion_tokens": 0}
+        }
+    
+    # Normal path with LLM for regulated outcomes
+    client = get_openai_client()
+    if client is None:
+        raise HTTPException(status_code=503, detail="OPENAI_API_KEY not set on server")
+    
+    # Format user's detailed answers for the prompt
+    answers_text = ""
+    if data.answers:
+        for qid, answer in data.answers.items():
+            if answer:
+                answers_text += f"\n**{qid}**: {answer}\n"
+    
+    # Build the hybrid master prompt
+    prompt = f"""You are an expert legal compliance assistant specializing in the Colorado Artificial Intelligence Act (CAIA).
+
+CLASSIFICATION: {outcome_title}
+
+LEGAL REQUIREMENTS:
+{requirements_text}
 
 USER'S DETAILED ANSWERS:
-{answers_text or '<<No specific answers provided>>'}
+{answers_text or '<<No specific answers provided yet>>'}
 
-Based on this information, create a structured compliance document that includes:
-1. Executive Summary of their classification
-2. Specific obligations under CAIA for this classification
-3. Documentation of their provided answers mapped to compliance requirements
-4. Action items for any missing or incomplete information
-5. Recommendations for maintaining compliance
+TASK:
+Generate the complete set of compliance documentation artifacts required for this classification.
 
-Format the document in markdown with clear sections and actionable guidance.
+First, carefully analyze the LEGAL REQUIREMENTS above to determine which specific documentation artifacts must be created to achieve full statutory compliance. Then generate each required artifact in full.
+
+CRITICAL INSTRUCTIONS:
+- Generate ONLY the actual compliance documents themselves - no explanatory text, no introductions, no instructions on how to complete them
+- Do NOT reference outcome numbers (e.g., "Outcome 7") or question identifiers (e.g., "q2_1") anywhere in the output
+- Do NOT include action items, checklists, or next steps
+- Do NOT include background information about CAIA or the classification process
+
+FORMAT REQUIREMENTS:
+- Each artifact must begin with a level-3 heading: ### [Artifact Name]
+- Generate each artifact completely and in full, filling in all sections
+- Use the organization's specific details from USER'S DETAILED ANSWERS throughout (e.g., actual system name, actual purposes, actual contact information)
+- For any missing information, use clear placeholders: [PLACEHOLDER: description of what information is needed]
+- Write in a professional, regulatory-compliant tone suitable for official documentation
+
+Generate all required artifacts now, one after another, with no additional commentary.
 """
     
     rsp = client.chat.completions.create(
         model=OPENAI_MODEL,
         messages=[
-            {"role": "system", "content": "You are a precise Colorado AI Act compliance analyst. Provide clear, actionable documentation."},
+            {"role": "system", "content": "You are an expert legal compliance assistant. Generate precise, actionable documentation that organizations can immediately use."},
             {"role": "user", "content": prompt},
-        ],
-        temperature=0.2,
+        ]
+        # temperature=0.2,
     )
     
     report_md = rsp.choices[0].message.content
