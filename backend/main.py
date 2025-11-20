@@ -139,6 +139,10 @@ class OutcomeDocumentationInput(BaseModel):
     checklist: dict
     surveyHistory: list
 
+class ChatMessage(BaseModel):
+    message: str
+    context: Optional[dict] = None  # User context (outcome, answers, etc.)
+
 # ── Helpers ───────────────────────────────────────────────────────────────
 def _compose_context_snippets(snips):
     lines = []
@@ -1260,6 +1264,125 @@ Maintain records of:
         "document_count": len(documents)
     }
 
+
+@app.post("/api/chat/compliance-assistant")
+def compliance_chat(data: ChatMessage, request: Request):
+    """RAG-powered chatbot for SB 24-205 compliance questions"""
+    _rate_limit(request.client.host)
+
+    # DEMO mode: simple responses
+    if DEMO_MODE:
+        return {
+            "message": f"Demo mode: I received your question '{data.message}'. In production, I would use RAG to answer based on SB 24-205.",
+            "citations": [],
+            "suggested_questions": [
+                "What is algorithmic discrimination?",
+                "When is the compliance deadline?",
+                "What are deployer obligations?"
+            ]
+        }
+
+    # Normal path with RAG
+    client = get_openai_client()
+    if client is None:
+        raise HTTPException(status_code=503, detail="OPENAI_API_KEY not set on server")
+
+    # Extract user context
+    user_context = data.context or {}
+    outcome = user_context.get('outcome', '')
+    role = user_context.get('role', 'unknown')
+
+    # Outcome titles for context
+    outcome_titles = {
+        "outcome1": "Not Subject to the Colorado AI Act",
+        "outcome2": "Exempt Deployer",
+        "outcome3": "Not an AI System Under CAIA",
+        "outcome4": "Not a Developer Under CAIA",
+        "outcome5": "General AI System with Disclosure Duty",
+        "outcome6": "Not a Regulated System",
+        "outcome7": "Developer of High-Risk AI System",
+        "outcome8": "Deployer of High-Risk AI System",
+        "outcome9": "Both Developer and Deployer of High-Risk AI System"
+    }
+    outcome_title = outcome_titles.get(outcome, "Unknown")
+
+    # Build context-aware query for RAG
+    enhanced_query = f"""
+User Classification: {outcome_title}
+User Question: {data.message}
+"""
+
+    # Retrieve relevant SB 24-205 sections using RAG
+    top_snips = []
+    regulatory_context = ""
+    if REG_INDEX and retrieve:
+        try:
+            top_snips = retrieve(client, REG_INDEX, enhanced_query, k=5)
+            regulatory_context = _compose_context_snippets(top_snips)
+        except Exception as e:
+            log.warning(f"Retrieval failed; continuing without context: {e}")
+
+    # Build system prompt
+    system_prompt = f"""You are a Colorado AI Act (SB 24-205) compliance advisor chatbot.
+
+USER CONTEXT:
+- Classification: {outcome_title}
+- Role: {role}
+
+Your job is to:
+1. Answer questions using ONLY the provided SB 24-205 text below
+2. Cite specific sections using format [SB 24-205 §X]
+3. Focus on obligations relevant to their classification
+4. Be concise and actionable (2-3 paragraphs max)
+5. If the answer isn't in the provided text, say "I don't have that specific information in SB 24-205"
+
+RELEVANT LAW SECTIONS FROM SB 24-205:
+{regulatory_context or '<<No relevant sections found>>'}
+"""
+
+    # Call LLM
+    try:
+        response = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": data.message}
+            ],
+            temperature=0.1,  # Low temperature for accuracy
+        )
+
+        answer = response.choices[0].message.content
+
+        # Generate suggested follow-up questions based on classification
+        suggested_questions = []
+        if "outcome7" in outcome or "outcome9" in outcome:  # Developer
+            suggested_questions = [
+                "What documentation must I provide to deployers?",
+                "What are my notification obligations to the Attorney General?",
+                "What is 'reasonable care' for developers?"
+            ]
+        elif "outcome8" in outcome or "outcome9" in outcome:  # Deployer
+            suggested_questions = [
+                "How often must I conduct impact assessments?",
+                "What is required in a risk management program?",
+                "What are consumer notification requirements?"
+            ]
+        else:
+            suggested_questions = [
+                "What is a 'consequential decision'?",
+                "What is 'algorithmic discrimination'?",
+                "When does SB 24-205 take effect?"
+            ]
+
+        return {
+            "message": answer,
+            "citations": [{"key": s.key, "title": s.title, "source": s.source} for s in top_snips],
+            "suggested_questions": suggested_questions
+        }
+
+    except Exception as e:
+        log.error(f"Chat completion failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate response")
 
 @app.get("/checkup", include_in_schema=False)
 def readiness_check():

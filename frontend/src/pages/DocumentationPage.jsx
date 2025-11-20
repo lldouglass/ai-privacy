@@ -4,6 +4,7 @@ import axios from "axios";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 import html2pdf from "html2pdf.js";
+import ComplianceChatbot from "../components/ComplianceChatbot";
 import "../styles.css";
 
 // Hard-coded questions (checklists are now dynamically generated)
@@ -654,11 +655,11 @@ export default function DocumentationPage() {
       padding: '2rem'
     }}>
       <div style={{
-        maxWidth: '1400px',
+        maxWidth: '1800px',
         margin: '0 auto',
         display: 'grid',
-        gridTemplateColumns: hasQuestions ? '1fr 350px' : '1fr',
-        gap: '2rem'
+        gridTemplateColumns: '1fr 400px',
+        gap: '1.5rem'
       }}>
         {/* Main content area */}
         <div style={{
@@ -823,14 +824,21 @@ export default function DocumentationPage() {
           </div>
         </div>
 
-        {/* Checklist sidebar - Dynamic now, but originally showed static checklists here. 
-            Since we want to "Remove the checklist during the answering questions phase", 
-            we just don't render it here unless showResult is true (which is handled in the conditional block above).
-            Or if we want it to be visible during questions only if it was already generated... 
-            But the requirement says "Remove the checklist during the answering questions phase. The checklist will be generated after all questions are answered."
-            
-            So we simply remove the sidebar from the "questions" view entirely.
-        */}
+        {/* Chatbot Assistant */}
+        <div style={{
+          height: '800px',
+          position: 'sticky',
+          top: '2rem'
+        }}>
+          <ComplianceChatbot
+            userContext={{
+              outcome: outcome,
+              role: outcome === 'outcome7' ? 'developer' : outcome === 'outcome8' ? 'deployer' : outcome === 'outcome9' ? 'both' : 'unknown',
+              answers: answers,
+              checklist: checklist
+            }}
+          />
+        </div>
       </div>
     </div>
   );
