@@ -7,6 +7,15 @@ import html2pdf from "html2pdf.js";
 import ComplianceChatbot from "../components/ComplianceChatbot";
 import "../styles.css";
 
+// Utility function to format document keys as readable labels
+function formatDocumentLabel(key) {
+  // Convert snake_case to Title Case
+  // e.g., "general_statement" -> "General Statement"
+  return key.split('_').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(' ');
+}
+
 // Hard-coded questions (checklists are now dynamically generated)
 const outcomeData = {
   outcome1: {
@@ -194,10 +203,10 @@ export default function DocumentationPage() {
   const [checklistItems, setChecklistItems] = useState([]); // For storing the dynamic checklist items
   const [currentStep, setCurrentStep] = useState(0);
   const [showResult, setShowResult] = useState(false);
-  const [generatedDoc, setGeneratedDoc] = useState("");
+  const [documents, setDocuments] = useState({}); // Dictionary of all generated documents
+  const [selectedDocKey, setSelectedDocKey] = useState(null); // Currently selected document key
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEditing, setIsEditing] = useState(true);
-  const [editedMarkdown, setEditedMarkdown] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
@@ -285,9 +294,12 @@ export default function DocumentationPage() {
       ]);
       
       // Handle documentation response
-      const markdown = docResponse.data.report;
-      setGeneratedDoc(markdown);
-      setEditedMarkdown(markdown);
+      const documentsDict = docResponse.data.documents || {};
+      setDocuments(documentsDict);
+      
+      // Set first document as selected by default
+      const firstKey = Object.keys(documentsDict)[0];
+      setSelectedDocKey(firstKey || null);
 
       // Handle checklist response
       if (checklistResponse.data.checklist) {
@@ -307,10 +319,16 @@ export default function DocumentationPage() {
   };
 
   const handleDownload = async () => {
+    if (!selectedDocKey || !documents[selectedDocKey]) {
+      alert('No document selected to download.');
+      return;
+    }
+
     setIsDownloading(true);
     try {
-      // Parse markdown to HTML
-      const rawHtml = marked.parse(editedMarkdown);
+      // Use only the currently selected document
+      const currentMarkdown = documents[selectedDocKey] || '';
+      const rawHtml = marked.parse(currentMarkdown);
       const sanitizedHtml = DOMPurify.sanitize(rawHtml);
       
       // Create a temporary container with proper styling for PDF
@@ -342,10 +360,10 @@ export default function DocumentationPage() {
       `;
       container.appendChild(style);
       
-      // Configure html2pdf options
+      // Configure html2pdf options with document-specific filename
       const opt = {
         margin: [10, 10, 10, 10],
-        filename: `${outcome}_compliance_documentation.pdf`,
+        filename: `${formatDocumentLabel(selectedDocKey)}_${outcome}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
@@ -415,87 +433,151 @@ export default function DocumentationPage() {
               Generated Documentation
             </h1>
 
-            {/* Edit/Preview Toggle Button */}
-            <div style={{
-              display: 'flex',
-              gap: '0.5rem',
-              marginBottom: '1rem'
-            }}>
-              <button
-                onClick={() => setIsEditing(true)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  background: isEditing ? 'var(--primary)' : 'transparent',
-                  border: `1px solid var(--primary)`,
-                  borderRadius: '8px',
-                  color: isEditing ? '#fff' : 'var(--primary)',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  fontFamily: 'inherit'
-                }}
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => setIsEditing(false)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  background: !isEditing ? 'var(--primary)' : 'transparent',
-                  border: `1px solid var(--primary)`,
-                  borderRadius: '8px',
-                  color: !isEditing ? '#fff' : 'var(--primary)',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  fontFamily: 'inherit'
-                }}
-              >
-                Preview
-              </button>
-            </div>
-            
-            {/* Markdown Editor or Preview */}
-            {isEditing ? (
-              <textarea
-                value={editedMarkdown}
-                onChange={(e) => setEditedMarkdown(e.target.value)}
-                style={{
-                  width: '100%',
-                  minHeight: '500px',
-                  padding: '1.5rem',
-                  background: 'var(--bg-elev)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '12px',
-                  color: 'var(--text)',
-                  fontSize: '0.875rem',
-                  fontFamily: 'monospace',
-                  lineHeight: '1.6',
-                  resize: 'vertical',
-                  marginBottom: '2rem'
-                }}
-              />
+            {Object.keys(documents).length === 0 ? (
+              <div style={{
+                background: 'var(--bg-elev)',
+                border: '1px solid var(--border)',
+                borderRadius: '12px',
+                padding: '2rem',
+                marginBottom: '2rem',
+                textAlign: 'center'
+              }}>
+                <p style={{
+                  color: 'var(--muted)',
+                  fontSize: '1rem',
+                  margin: 0
+                }}>
+                  No documents generated for this outcome.
+                </p>
+              </div>
             ) : (
-              <div
-                style={{
-                  background: 'var(--bg-elev)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '12px',
-                  padding: '2rem',
-                  marginBottom: '2rem',
-                  minHeight: '500px',
-                  maxHeight: '700px',
-                  overflow: 'auto',
-                  color: 'var(--text)',
-                  fontSize: '0.875rem',
-                  lineHeight: '1.6'
-                }}
-                dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(marked.parse(editedMarkdown))
-                }}
-              />
+              <>
+                {/* Document Tabs Navigation */}
+                <div style={{
+                  borderBottom: '1px solid var(--border)',
+                  marginBottom: '1.5rem',
+                  overflowX: 'auto',
+                  whiteSpace: 'nowrap'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    gap: '0.5rem',
+                    paddingBottom: '0.5rem'
+                  }}>
+                    {Object.keys(documents).map(key => (
+                      <button
+                        key={key}
+                        onClick={() => setSelectedDocKey(key)}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          background: selectedDocKey === key ? 'var(--primary)' : 'transparent',
+                          border: selectedDocKey === key ? 'none' : '1px solid var(--border)',
+                          borderRadius: '8px 8px 0 0',
+                          color: selectedDocKey === key ? '#fff' : 'var(--text)',
+                          fontSize: '0.875rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          fontFamily: 'inherit',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {formatDocumentLabel(key)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Edit/Preview Toggle Button */}
+                <div style={{
+                  display: 'flex',
+                  gap: '0.5rem',
+                  marginBottom: '1rem'
+                }}>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      background: isEditing ? 'var(--primary)' : 'transparent',
+                      border: `1px solid var(--primary)`,
+                      borderRadius: '8px',
+                      color: isEditing ? '#fff' : 'var(--primary)',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      fontFamily: 'inherit'
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      background: !isEditing ? 'var(--primary)' : 'transparent',
+                      border: `1px solid var(--primary)`,
+                      borderRadius: '8px',
+                      color: !isEditing ? '#fff' : 'var(--primary)',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      fontFamily: 'inherit'
+                    }}
+                  >
+                    Preview
+                  </button>
+                </div>
+                
+                {/* Markdown Editor or Preview */}
+                {selectedDocKey && (
+                  <>
+                    {isEditing ? (
+                      <textarea
+                        value={documents[selectedDocKey] || ''}
+                        onChange={(e) => setDocuments(prev => ({
+                          ...prev,
+                          [selectedDocKey]: e.target.value
+                        }))}
+                        style={{
+                          width: '100%',
+                          minHeight: '500px',
+                          padding: '1.5rem',
+                          background: 'var(--bg-elev)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '12px',
+                          color: 'var(--text)',
+                          fontSize: '0.875rem',
+                          fontFamily: 'monospace',
+                          lineHeight: '1.6',
+                          resize: 'vertical',
+                          marginBottom: '2rem'
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          background: 'var(--bg-elev)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '12px',
+                          padding: '2rem',
+                          marginBottom: '2rem',
+                          minHeight: '500px',
+                          maxHeight: '700px',
+                          overflow: 'auto',
+                          color: 'var(--text)',
+                          fontSize: '0.875rem',
+                          lineHeight: '1.6'
+                        }}
+                        dangerouslySetInnerHTML={{
+                          __html: DOMPurify.sanitize(marked.parse(documents[selectedDocKey] || ''))
+                        }}
+                      />
+                    )}
+                  </>
+                )}
+              </>
             )}
 
             {/* Action buttons */}

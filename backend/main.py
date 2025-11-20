@@ -2,6 +2,7 @@ import os, json, yaml, time, logging
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from fastapi.responses import FileResponse
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, UploadFile, Form, Request
@@ -504,6 +505,609 @@ You do not need to create developer documentation, conduct pre-deployment testin
     # Fallback for unknown outcomes
     return outcome_title, f"# {outcome_title}\n\n*Classification details not available.*"
 
+# ── Specialized Document Generation Agents ────────────────────────────
+
+def _generate_general_statement(client, outcome_title: str, requirements_text: str, answers_text: str, user_role: Optional[str] = None) -> tuple[str, dict]:
+    """Generate General Statement of Uses (Developer) - § 6-1-1702(2)(a)"""
+    prompt = f"""You are a compliance documentation specialist for the Colorado AI Act.
+
+CLASSIFICATION: {outcome_title}
+
+STATUTORY REQUIREMENT (§ 6-1-1702(2)(a)):
+A developer must provide a general statement describing:
+- The reasonably foreseeable uses of the high-risk AI system
+- Known harmful or inappropriate uses of the high-risk AI system
+
+USER'S SYSTEM DETAILS:
+{answers_text or '<<No specific details provided>>'}
+
+TASK:
+Generate a complete "General Statement of Intended and Prohibited Uses" document that developers can provide to deployers.
+
+DOCUMENT STRUCTURE:
+1. Introduction - Brief overview of the system and purpose of this statement
+2. Reasonably Foreseeable Uses - List and describe legitimate use cases
+3. Known Harmful or Inappropriate Uses - Explicitly list uses that are known to be harmful or inappropriate
+4. Use Case Boundaries - Clarify the boundaries between appropriate and inappropriate uses
+5. Deployment Context Considerations - Factors deployers should consider
+
+CRITICAL INSTRUCTIONS:
+- Generate ONLY the actual document itself - no meta-commentary
+- Output MUST be in proper markdown format with appropriate headers, lists, and formatting
+- Use the organization's specific details from the user's answers
+- For missing information, use: [PLACEHOLDER: description]
+- Do NOT reference outcome numbers or question IDs
+- Write in professional, regulatory-compliant tone
+- Be specific and actionable for deployers receiving this document
+"""
+    
+    rsp = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": "You are a precision compliance documentation specialist. Generate complete, implementable documents."},
+            {"role": "user", "content": prompt}
+        ],
+    )
+    
+    content = rsp.choices[0].message.content
+    usage = getattr(rsp, "usage", None)
+    if hasattr(usage, "model_dump"):
+        usage = usage.model_dump()
+    return content, usage or {}
+
+
+def _generate_technical_summary(client, outcome_title: str, requirements_text: str, answers_text: str, user_role: Optional[str] = None) -> tuple[str, dict]:
+    """Generate Technical Summary (Developer) - § 6-1-1702(2)(b,e,f)"""
+    prompt = f"""You are a compliance documentation specialist for the Colorado AI Act.
+
+CLASSIFICATION: {outcome_title}
+
+STATUTORY REQUIREMENTS:
+§ 6-1-1702(2)(b) - Summary of training data type
+§ 6-1-1702(2)(e) - Overview of data types deployers should use
+§ 6-1-1702(2)(f) - Known limitations and risks of algorithmic discrimination
+
+USER'S SYSTEM DETAILS:
+{answers_text or '<<No specific details provided>>'}
+
+TASK:
+Generate a complete "Technical Summary" document for deployers.
+
+DOCUMENT STRUCTURE:
+1. System Overview - High-level description of the AI system architecture
+2. Training Data Summary - Types of data used, sources, time periods, collection methods
+3. Input Data Requirements - Types and formats of data deployers should provide
+4. Data Quality Expectations - Standards for input data quality
+5. Known Limitations - Technical and operational limitations
+6. Known Risks of Algorithmic Discrimination - Specific discrimination risks identified
+7. Mitigation Measures Implemented - Built-in safeguards and fairness controls
+8. Data Handling and Privacy - How data is processed and protected
+
+CRITICAL INSTRUCTIONS:
+- Generate ONLY the actual document itself
+- Output MUST be in proper markdown format with appropriate headers, lists, and formatting
+- Use the organization's specific technical details from the user's answers
+- For missing information, use: [PLACEHOLDER: specific technical detail needed]
+- Do NOT reference outcome numbers or question IDs
+- Use clear technical language appropriate for deployer technical teams
+- Be specific about data types, formats, and requirements
+"""
+    
+    rsp = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": "You are a technical compliance documentation specialist. Generate precise, actionable technical documents."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    
+    content = rsp.choices[0].message.content
+    usage = getattr(rsp, "usage", None)
+    if hasattr(usage, "model_dump"):
+        usage = usage.model_dump()
+    return content, usage or {}
+
+
+def _generate_evaluation_artifact(client, outcome_title: str, requirements_text: str, answers_text: str, user_role: Optional[str] = None) -> tuple[str, dict]:
+    """Generate Evaluation Artifact (Developer) - § 6-1-1702(2)(c,d)"""
+    prompt = f"""You are a compliance documentation specialist for the Colorado AI Act.
+
+CLASSIFICATION: {outcome_title}
+
+STATUTORY REQUIREMENTS:
+§ 6-1-1702(2)(c) - Description of how system was evaluated for performance and algorithmic discrimination mitigation, including limitations
+§ 6-1-1702(2)(d) - Description of monitoring data deployers must provide
+
+USER'S SYSTEM DETAILS:
+{answers_text or '<<No specific details provided>>'}
+
+TASK:
+Generate a complete "Performance Evaluation and Monitoring Requirements" document.
+
+DOCUMENT STRUCTURE:
+1. Evaluation Methodology - Testing approach and frameworks used
+2. Test Data Description - Characteristics of evaluation datasets
+3. Performance Metrics - Overall accuracy, precision, recall, and other performance measures
+4. Fairness Evaluation - Testing for algorithmic discrimination across protected characteristics
+5. Fairness Metrics Results - Demographic parity, equal opportunity, calibration metrics
+6. Limitations of Evaluation - Known limitations and gaps in testing
+7. Ongoing Monitoring Requirements - Data deployers must collect and provide back to developer
+8. Recommended Performance Thresholds - Metrics deployers should monitor
+9. Monitoring Frequency - How often deployers should evaluate performance
+
+CRITICAL INSTRUCTIONS:
+- Generate ONLY the actual document itself
+- Output MUST be in proper markdown format with appropriate headers, lists, and formatting
+- Include specific metrics and methodologies from the user's answers
+- For missing information, use: [PLACEHOLDER: specific metric or methodology]
+- Do NOT reference outcome numbers or question IDs
+- Use quantitative metrics where possible
+- Be specific about what deployers must monitor and report back
+"""
+    
+    rsp = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": "You are a technical compliance documentation specialist for AI evaluation. Generate complete, metric-driven documents."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    
+    content = rsp.choices[0].message.content
+    usage = getattr(rsp, "usage", None)
+    if hasattr(usage, "model_dump"):
+        usage = usage.model_dump()
+    return content, usage or {}
+
+
+def _generate_risk_management_policy(client, outcome_title: str, requirements_text: str, answers_text: str, user_role: Optional[str] = None) -> tuple[str, dict]:
+    """Generate Risk Management Policy (Deployer) - § 6-1-1703(2)"""
+    prompt = f"""You are a compliance documentation specialist for the Colorado AI Act.
+
+CLASSIFICATION: {outcome_title}
+
+STATUTORY REQUIREMENT (§ 6-1-1703(2)):
+A deployer must implement a risk management policy and program including:
+- Documented policies, procedures, and practices to manage algorithmic discrimination risks
+- Regular identification, documentation, and mitigation of risks
+- Annual review and updates
+
+The policy should align with NIST AI Risk Management Framework or ISO/IEC 42001.
+
+USER'S SYSTEM DETAILS:
+{answers_text or '<<No specific details provided>>'}
+
+TASK:
+Generate a complete "Risk Management Policy and Program" document.
+
+DOCUMENT STRUCTURE:
+1. Policy Statement - Purpose and scope of risk management program
+2. Governance Structure - Roles, responsibilities, and accountability (map to NIST AI RMF GOVERN function)
+3. Risk Identification Process - How risks are identified and documented (MAP function)
+4. Risk Assessment and Measurement - Methods for evaluating risk severity (MEASURE function)
+5. Risk Mitigation and Management - Strategies for addressing identified risks (MANAGE function)
+6. Testing and Validation - Ongoing testing protocols for algorithmic discrimination
+7. Monitoring and Reporting - Continuous monitoring and escalation procedures
+8. Incident Response - Procedures when discrimination is detected
+9. Annual Review Process - Schedule and methodology for annual updates
+10. Documentation and Record-Keeping - What records must be maintained
+
+CRITICAL INSTRUCTIONS:
+- Generate ONLY the actual policy document itself
+- Output MUST be in proper markdown format with appropriate headers, lists, and formatting
+- Align with NIST AI RMF structure (Govern, Map, Measure, Manage)
+- Use the organization's specific details from the user's answers
+- For missing information, use: [PLACEHOLDER: specific procedure or detail]
+- Do NOT reference outcome numbers or question IDs
+- Write in formal policy language suitable for internal governance
+"""
+    
+    rsp = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": "You are a compliance policy specialist. Generate formal, implementable governance documents aligned with NIST AI RMF."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    
+    content = rsp.choices[0].message.content
+    usage = getattr(rsp, "usage", None)
+    if hasattr(usage, "model_dump"):
+        usage = usage.model_dump()
+    return content, usage or {}
+
+
+def _generate_impact_assessment(client, outcome_title: str, requirements_text: str, answers_text: str, user_role: Optional[str] = None) -> tuple[str, dict]:
+    """Generate Impact Assessment (Deployer) - § 6-1-1703(3)"""
+    prompt = f"""You are a compliance documentation specialist for the Colorado AI Act.
+
+CLASSIFICATION: {outcome_title}
+
+STATUTORY REQUIREMENT (§ 6-1-1703(3)):
+A deployer must complete an impact assessment before deployment containing:
+- Purpose, intended use cases, benefits, and deployment context
+- Analysis of discrimination risks
+- Description of data categories and data management
+- Description of risk management implementation
+- Performance metrics for evaluating algorithmic discrimination
+
+USER'S SYSTEM DETAILS:
+{answers_text or '<<No specific details provided>>'}
+
+TASK:
+Generate a complete "Impact Assessment" document that must be updated annually.
+
+DOCUMENT STRUCTURE:
+1. Executive Summary - High-level overview of the assessment
+2. System Description and Purpose - Detailed description of the AI system and its purpose
+3. Intended Use Cases and Benefits - Specific use cases and intended benefits
+4. Deployment Context - Where and how the system will be deployed
+5. Consequential Decision Analysis - Nature of decisions and potential impacts on consumers
+6. Data Categories and Sources - Types of data processed, collected, and used
+7. Data Management Practices - Collection, use, protection, and retention of data
+8. Algorithmic Discrimination Risk Analysis - Identified risks across protected characteristics
+9. Risk Mitigation Strategies - How identified risks are being addressed
+10. Risk Management Program Implementation - Description of policies and procedures in place
+11. Performance Metrics - Specific metrics for monitoring algorithmic discrimination
+12. Testing and Validation Results - Summary of bias testing conducted
+13. Human Oversight and Review - Role of human decision-makers
+14. Consumer Rights Implementation - How consumer rights are being protected
+15. Annual Review Schedule - Date of next required update
+
+CRITICAL INSTRUCTIONS:
+- Generate ONLY the actual impact assessment document
+- Output MUST be in proper markdown format with appropriate headers, lists, and formatting
+- Use the organization's specific details from the user's answers
+- For missing information, use: [PLACEHOLDER: specific detail or data]
+- Do NOT reference outcome numbers or question IDs
+- Write in formal, analytical tone suitable for regulatory review
+- Include specific, measurable metrics where possible
+"""
+    
+    rsp = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": "You are a regulatory impact assessment specialist. Generate thorough, analytical assessment documents."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    
+    content = rsp.choices[0].message.content
+    usage = getattr(rsp, "usage", None)
+    if hasattr(usage, "model_dump"):
+        usage = usage.model_dump()
+    return content, usage or {}
+
+
+def _generate_public_website_statement(client, outcome_title: str, requirements_text: str, answers_text: str, user_role: Optional[str] = None) -> tuple[str, dict]:
+    """Generate Public Website Statement (Shared) - § 6-1-1702(4) / § 6-1-1703(4)"""
+    
+    # Determine role-specific requirements
+    if user_role == "developer" or "Developer" in outcome_title:
+        role_context = """As a DEVELOPER, your public statement must describe (§ 6-1-1702(4)):
+- Types of high-risk AI systems you develop
+- How you manage risks of algorithmic discrimination in development"""
+    elif user_role == "deployer" or "Deployer" in outcome_title:
+        role_context = """As a DEPLOYER, your public statement must describe (§ 6-1-1703(4)):
+- Intended use of the high-risk AI systems you deploy
+- How you manage known or reasonably foreseeable risks of algorithmic discrimination"""
+    else:
+        role_context = """As BOTH a developer and deployer, your public statement must describe:
+- Types of high-risk AI systems you develop (developer requirement)
+- How you manage discrimination risks in development (developer requirement)
+- Intended uses of systems you deploy (deployer requirement)
+- How you manage discrimination risks in deployment (deployer requirement)"""
+    
+    prompt = f"""You are a compliance documentation specialist for the Colorado AI Act.
+
+CLASSIFICATION: {outcome_title}
+
+ROLE-SPECIFIC REQUIREMENTS:
+{role_context}
+
+USER'S SYSTEM DETAILS:
+{answers_text or '<<No specific details provided>>'}
+
+TASK:
+Generate a complete "Public AI Systems Disclosure" webpage content suitable for publishing on the organization's website.
+
+DOCUMENT STRUCTURE:
+1. Introduction - Brief statement about commitment to responsible AI
+2. AI Systems Overview - Description of high-risk AI systems (developed and/or deployed)
+3. Use Cases and Applications - How the AI systems are used
+4. Risk Management Approach - How algorithmic discrimination risks are managed
+5. Governance and Oversight - Who is accountable for AI systems
+6. Testing and Validation - How systems are tested for fairness
+7. Consumer Rights - How consumers can exercise their rights
+8. Contact Information - How to reach the organization with questions or concerns
+9. Additional Resources - Links to more detailed information
+
+CRITICAL INSTRUCTIONS:
+- Generate ONLY the actual webpage content
+- Output MUST be in proper markdown format with appropriate headers, lists, and formatting
+- Write for a public audience - clear, accessible language
+- Balance transparency with trade secret protection
+- Use the organization's specific details from the user's answers
+- For missing information, use: [PLACEHOLDER: specific detail]
+- Do NOT reference outcome numbers or question IDs
+- Maintain professional tone that builds public trust
+"""
+    
+    rsp = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": "You are a public communications specialist for AI compliance. Generate clear, trustworthy public disclosures."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    
+    content = rsp.choices[0].message.content
+    usage = getattr(rsp, "usage", None)
+    if hasattr(usage, "model_dump"):
+        usage = usage.model_dump()
+    return content, usage or {}
+
+
+def _generate_consumer_notice(client, outcome_title: str, requirements_text: str, answers_text: str, user_role: Optional[str] = None) -> tuple[str, dict]:
+    """Generate Consumer Notice Pre-Decision (Shared) - § 6-1-1703(5)"""
+    prompt = f"""You are a compliance documentation specialist for the Colorado AI Act.
+
+CLASSIFICATION: {outcome_title}
+
+STATUTORY REQUIREMENT (§ 6-1-1703(5)):
+When making or substantially influencing a consequential decision, deployers must provide consumers:
+- Statement that a high-risk AI system was used in the decision-making
+- Information about the purpose of the system
+- Nature of the consequential decision
+- Contact information for questions
+- Rights to opt out (where applicable)
+- Rights to appeal and seek human review
+
+USER'S SYSTEM DETAILS:
+{answers_text or '<<No specific details provided>>'}
+
+TASK:
+Generate a "Consumer Notice Template" that can be customized for different consequential decisions.
+
+DOCUMENT STRUCTURE:
+1. Notice Header - Clear title indicating this is an AI use notice
+2. AI System Usage Statement - Clear statement that AI is being used
+3. Purpose and Function - What the AI system does
+4. Decision Type - Nature of the consequential decision being made
+5. Your Rights - List of consumer rights (opt-out, appeal, human review)
+6. How to Exercise Your Rights - Specific instructions for exercising rights
+7. Contact Information - How to get more information or file appeals
+8. Additional Information - Where to find more details
+
+FORMAT OPTIONS:
+Provide 3 versions:
+- Full Notice (for written communications)
+- Short Notice (for in-app or web interfaces)
+- Verbal Script (for phone or in-person interactions)
+
+CRITICAL INSTRUCTIONS:
+- Generate actual notice templates, not instructions
+- Output MUST be in proper markdown format with appropriate headers, lists, and formatting
+- Use plain language - aim for 8th grade reading level
+- Be concise but complete - consumers need to understand their rights
+- Use the organization's specific details from the user's answers
+- For missing information, use: [PLACEHOLDER: specific detail]
+- Do NOT reference outcome numbers or question IDs
+- Format for easy implementation (copy-paste ready)
+"""
+    
+    rsp = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": "You are a consumer communications specialist. Generate clear, accessible consumer notices in plain language."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    
+    content = rsp.choices[0].message.content
+    usage = getattr(rsp, "usage", None)
+    if hasattr(usage, "model_dump"):
+        usage = usage.model_dump()
+    return content, usage or {}
+
+
+def _generate_adverse_action_notice(client, outcome_title: str, requirements_text: str, answers_text: str, user_role: Optional[str] = None) -> tuple[str, dict]:
+    """Generate Adverse Action Notice (Shared) - § 6-1-1703(6)"""
+    prompt = f"""You are a compliance documentation specialist for the Colorado AI Act.
+
+CLASSIFICATION: {outcome_title}
+
+STATUTORY REQUIREMENT (§ 6-1-1703(6)):
+For adverse consequential decisions, deployers must provide:
+- Explanation of principal reason(s) for the adverse decision
+- Data or data source that was a significant factor
+- Opportunity to correct incorrect personal data
+- Opportunity to appeal with human review (where technically feasible)
+- Information about how to submit an appeal
+
+USER'S SYSTEM DETAILS:
+{answers_text or '<<No specific details provided>>'}
+
+TASK:
+Generate an "Adverse Action Notice Template" that explains AI-based denials or negative decisions.
+
+DOCUMENT STRUCTURE:
+1. Notice Header - Clear indication this is an adverse action notice
+2. Decision Summary - What decision was made
+3. Principal Reasons - Main factors that led to the decision
+4. Significant Data Factors - Specific data that influenced the decision
+5. Right to Correct Data - How to correct any incorrect personal information
+6. Right to Appeal - Clear explanation of appeal rights
+7. How to Appeal - Step-by-step process for filing an appeal
+8. Human Review Process - What to expect from human review
+9. Timeline - How long the appeal process takes
+10. Contact Information - Who to contact for appeals
+
+FORMAT OPTIONS:
+Provide templates for common adverse decisions:
+- Loan/Credit Denial
+- Employment Application Rejection
+- Housing Application Denial
+- Insurance Coverage Denial or Pricing
+- Educational Opportunity Denial
+- Healthcare Treatment/Coverage Decision
+
+CRITICAL INSTRUCTIONS:
+- Generate actual notice templates that can be customized
+- Output MUST be in proper markdown format with appropriate headers, lists, and formatting
+- Use plain language - must be clear to consumers
+- Be specific about appeal processes and timelines
+- Use the organization's specific details from the user's answers
+- For missing information, use: [PLACEHOLDER: specific procedure]
+- Do NOT reference outcome numbers or question IDs
+- Balance legal requirements with empathetic tone
+- Format for easy implementation
+"""
+    
+    rsp = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": "You are a consumer rights specialist. Generate clear, empathetic adverse action notices that protect consumer rights."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    
+    content = rsp.choices[0].message.content
+    usage = getattr(rsp, "usage", None)
+    if hasattr(usage, "model_dump"):
+        usage = usage.model_dump()
+    return content, usage or {}
+
+
+def _generate_interaction_notice(client, outcome_title: str, requirements_text: str, answers_text: str, user_role: Optional[str] = None) -> tuple[str, dict]:
+    """Generate Interaction Notice (General AI) - § 6-1-1704"""
+    prompt = f"""You are a compliance documentation specialist for the Colorado AI Act.
+
+CLASSIFICATION: {outcome_title}
+
+STATUTORY REQUIREMENT (§ 6-1-1704):
+Entities that deploy AI systems intended to interact with consumers must disclose that the consumer is interacting with an AI system (unless it would be obvious to a reasonable person).
+
+USER'S SYSTEM DETAILS:
+{answers_text or '<<No specific details provided>>'}
+
+TASK:
+Generate "AI Interaction Disclosure Notices" for various contexts.
+
+DOCUMENT STRUCTURE (provide multiple format options):
+1. Website/App Chatbot Disclosure
+2. Phone System Disclosure
+3. Email/Messaging Disclosure
+4. In-Person Kiosk/Interface Disclosure
+5. General AI Interaction Banner
+
+Each notice should:
+- Clearly state that user is interacting with AI
+- Be concise (1-2 sentences)
+- Be immediately visible/audible
+- Use plain language
+
+EXAMPLES TO PROVIDE:
+- Chat widget popup message
+- Phone system greeting
+- Email signature disclosure
+- Mobile app banner
+- Website header notice
+
+CRITICAL INSTRUCTIONS:
+- Generate actual disclosure text, not instructions
+- Output MUST be in proper markdown format with appropriate headers, lists, and formatting
+- Keep it very brief - consumers need immediate clarity
+- Multiple format options for different channels
+- Use the organization's specific details from the user's answers
+- For missing information, use: [PLACEHOLDER: system name]
+- Do NOT reference outcome numbers or question IDs
+- Each disclosure should be copy-paste ready
+"""
+    
+    rsp = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": "You are a user experience writer specializing in AI disclosures. Generate brief, clear interaction notices."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    
+    content = rsp.choices[0].message.content
+    usage = getattr(rsp, "usage", None)
+    if hasattr(usage, "model_dump"):
+        usage = usage.model_dump()
+    return content, usage or {}
+
+
+def _generate_synthetic_content_disclosure(client, outcome_title: str, requirements_text: str, answers_text: str, user_role: Optional[str] = None) -> tuple[str, dict]:
+    """Generate Synthetic Content/Deepfake Disclosure (General AI) - § 6-1-1704"""
+    prompt = f"""You are a compliance documentation specialist for the Colorado AI Act.
+
+CLASSIFICATION: {outcome_title}
+
+STATUTORY REQUIREMENT (§ 6-1-1704):
+For AI-generated synthetic content (including deepfakes), entities must disclose that the content is AI-generated.
+
+USER'S SYSTEM DETAILS:
+{answers_text or '<<No specific details provided>>'}
+
+TASK:
+Generate "Synthetic Content Disclosure Notices" for various media types.
+
+DOCUMENT STRUCTURE (provide format options for each media type):
+1. Image/Photo Disclosures
+   - Watermark text options
+   - Caption text options
+   - Metadata tags
+2. Video Content Disclosures
+   - Opening/closing slate text
+   - Overlay text options
+   - Description field text
+3. Audio Content Disclosures
+   - Verbal disclosure scripts
+   - Audio description text
+4. Text Content Disclosures
+   - Article disclaimers
+   - Email/message disclosures
+5. Mixed Media Disclosures
+   - Social media post templates
+   - Website content disclaimers
+
+Each disclosure should:
+- Clearly state content is AI-generated
+- Be prominent and conspicuous
+- Use clear, plain language
+- Avoid minimizing the AI nature
+
+CRITICAL INSTRUCTIONS:
+- Generate actual disclosure text and placement guidance
+- Output MUST be in proper markdown format with appropriate headers, lists, and formatting
+- Provide both short and detailed versions for each type
+- Include visual placement recommendations (e.g., "Top-left watermark", "Opening 5 seconds")
+- Use the organization's specific details from the user's answers
+- For missing information, use: [PLACEHOLDER: content type]
+- Do NOT reference outcome numbers or question IDs
+- Each disclosure should be implementation-ready
+"""
+    
+    rsp = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": "You are a media transparency specialist. Generate clear, prominent synthetic content disclosures."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    
+    content = rsp.choices[0].message.content
+    usage = getattr(rsp, "usage", None)
+    if hasattr(usage, "model_dump"):
+        usage = usage.model_dump()
+    return content, usage or {}
+
+
+# ── Outcome Documentation Generation (Refactored) ─────────────────────
+
 @app.post("/api/generate-outcome-documentation")
 def generate_outcome_documentation(data: OutcomeDocumentationInput, request: Request):
     """Generate compliance documentation based on survey outcome and user answers."""
@@ -533,13 +1137,13 @@ def generate_outcome_documentation(data: OutcomeDocumentationInput, request: Req
         
         demo_report += "\n*This is demo mode. In production, AI-generated personalized documentation would appear here.*"
         
-        return {"report": demo_report, "usage": {"total_tokens": 0}}
+        return {"documents": {"demo_report": demo_report}, "usage": {"total_tokens": 0}}
     
     # Check if outcome is "not regulated" (outcomes 1, 3, 4)
-    # For these, return the static summary without LLM generation
+    # For these, return empty documents dict
     if data.outcome in ["outcome1", "outcome3", "outcome4"]:
         return {
-            "report": requirements_text,
+            "documents": {},
             "usage": {"total_tokens": 0, "prompt_tokens": 0, "completion_tokens": 0}
         }
     
@@ -555,54 +1159,110 @@ def generate_outcome_documentation(data: OutcomeDocumentationInput, request: Req
             if answer:
                 answers_text += f"\n**{qid}**: {answer}\n"
     
-    # Build the hybrid master prompt
-    prompt = f"""You are an expert legal compliance assistant specializing in the Colorado Artificial Intelligence Act (CAIA).
-
-CLASSIFICATION: {outcome_title}
-
-LEGAL REQUIREMENTS:
-{requirements_text}
-
-USER'S DETAILED ANSWERS:
-{answers_text or '<<No specific answers provided yet>>'}
-
-TASK:
-Generate the complete set of compliance documentation artifacts required for this classification.
-
-First, carefully analyze the LEGAL REQUIREMENTS above to determine which specific documentation artifacts must be created to achieve full statutory compliance. Then generate each required artifact in full.
-
-CRITICAL INSTRUCTIONS:
-- Generate ONLY the actual compliance documents themselves - no explanatory text, no introductions, no instructions on how to complete them
-- Do NOT reference outcome numbers (e.g., "Outcome 7") or question identifiers (e.g., "q2_1") anywhere in the output
-- Do NOT include action items, checklists, or next steps
-- Do NOT include background information about CAIA or the classification process
-
-FORMAT REQUIREMENTS:
-- Each artifact must begin with a level-3 heading: ### [Artifact Name]
-- Generate each artifact completely and in full, filling in all sections
-- Use the organization's specific details from USER'S DETAILED ANSWERS throughout (e.g., actual system name, actual purposes, actual contact information)
-- For any missing information, use clear placeholders: [PLACEHOLDER: description of what information is needed]
-- Write in a professional, regulatory-compliant tone suitable for official documentation
-
-Generate all required artifacts now, one after another, with no additional commentary.
-"""
+    # Determine which documents to generate based on outcome
+    documents_to_generate = []
     
-    rsp = client.chat.completions.create(
-        model=OPENAI_MODEL,
-        messages=[
-            {"role": "system", "content": "You are an expert legal compliance assistant. Generate precise, actionable documentation that organizations can immediately use."},
-            {"role": "user", "content": prompt},
+    if data.outcome == "outcome2":  # Exempt Deployer
+        documents_to_generate = [
+            ("consumer_notice", _generate_consumer_notice),
+            ("adverse_action_notice", _generate_adverse_action_notice),
+            ("public_website_statement", _generate_public_website_statement),
         ]
-        # temperature=0.2,
-    )
+    elif data.outcome == "outcome5":  # General AI with Disclosure Duty
+        documents_to_generate = [
+            ("interaction_notice", _generate_interaction_notice),
+            ("synthetic_content_disclosure", _generate_synthetic_content_disclosure),
+        ]
+    elif data.outcome == "outcome6":  # Not a Regulated System
+        return {
+            "documents": {},
+            "usage": {"total_tokens": 0, "prompt_tokens": 0, "completion_tokens": 0}
+        }
+    elif data.outcome == "outcome7":  # Developer of High-Risk AI
+        documents_to_generate = [
+            ("general_statement", _generate_general_statement),
+            ("technical_summary", _generate_technical_summary),
+            ("evaluation_artifact", _generate_evaluation_artifact),
+            ("public_website_statement", _generate_public_website_statement),
+        ]
+    elif data.outcome == "outcome8":  # Deployer of High-Risk AI
+        documents_to_generate = [
+            ("risk_management_policy", _generate_risk_management_policy),
+            ("impact_assessment", _generate_impact_assessment),
+            ("consumer_notice", _generate_consumer_notice),
+            ("adverse_action_notice", _generate_adverse_action_notice),
+            ("public_website_statement", _generate_public_website_statement),
+        ]
+    elif data.outcome == "outcome9":  # Both Developer and Deployer
+        documents_to_generate = [
+            # Developer documents
+            ("general_statement", _generate_general_statement),
+            ("technical_summary", _generate_technical_summary),
+            ("evaluation_artifact", _generate_evaluation_artifact),
+            # Deployer documents
+            ("risk_management_policy", _generate_risk_management_policy),
+            ("impact_assessment", _generate_impact_assessment),
+            ("consumer_notice", _generate_consumer_notice),
+            ("adverse_action_notice", _generate_adverse_action_notice),
+            # Shared
+            ("public_website_statement", _generate_public_website_statement),
+        ]
+    else:
+        # Unknown outcome - return empty
+        return {
+            "documents": {},
+            "usage": {"total_tokens": 0, "prompt_tokens": 0, "completion_tokens": 0}
+        }
     
-    report_md = rsp.choices[0].message.content
+    # Determine user role for role-aware functions
+    user_role = None
+    if "Developer" in outcome_title and "Deployer" in outcome_title:
+        user_role = "both"
+    elif "Developer" in outcome_title:
+        user_role = "developer"
+    elif "Deployer" in outcome_title:
+        user_role = "deployer"
     
-    usage = getattr(rsp, "usage", None)
-    if hasattr(usage, "model_dump"):
-        usage = usage.model_dump()
+    # Generate all documents in parallel using ThreadPoolExecutor
+    documents = {}
+    usage_stats = {
+        "total_tokens": 0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "per_document": {}
+    }
     
-    return {"report": report_md, "usage": usage}
+    with ThreadPoolExecutor(max_workers=len(documents_to_generate)) as executor:
+        # Submit all document generation tasks
+        future_to_doc = {
+            executor.submit(
+                doc_func, 
+                client, 
+                outcome_title, 
+                requirements_text, 
+                answers_text,
+                user_role
+            ): doc_name
+            for doc_name, doc_func in documents_to_generate
+        }
+        
+        # Collect results as they complete
+        for future in as_completed(future_to_doc):
+            doc_name = future_to_doc[future]
+            try:
+                content, usage = future.result()
+                documents[doc_name] = content
+                
+                # Aggregate usage stats
+                usage_stats["per_document"][doc_name] = usage
+                usage_stats["total_tokens"] += usage.get("total_tokens", 0)
+                usage_stats["prompt_tokens"] += usage.get("prompt_tokens", 0)
+                usage_stats["completion_tokens"] += usage.get("completion_tokens", 0)
+            except Exception as e:
+                log.error(f"Failed to generate {doc_name}: {e}")
+                documents[doc_name] = f"# Error\n\nFailed to generate this document: {str(e)}"
+    
+    return {"documents": documents, "usage": usage_stats}
 
 
 @app.post("/api/generate-checklist")
