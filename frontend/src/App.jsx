@@ -20,7 +20,6 @@ function MainLandingPage() {
             <a href="#how">How it works</a>
             <a href="#evidence">Evidence pack</a>
             <a href="/trust">Trust</a>
-            <Link to="/demo">Demo</Link>
             <a className="btn btn-primary" href="#cta">Book intro</a>
           </nav>
         </div>
@@ -38,8 +37,8 @@ function MainLandingPage() {
                 using <strong>redacted or synthetic data</strong> (no production access required).
               </p>
               <div className="cta-row">
-                <Link className="btn btn-primary" to="/survey">Run readiness check</Link>
-                <Link className="btn btn-ghost" to="/demo">See live demo</Link>
+                <Link className="btn btn-primary" to="/survey">Risk Calculator</Link>
+                <Link className="btn btn-primary" to="/documentation">Generate Compliance Documentation</Link>
               </div>
               <ul className="trust-bullets">
                 <li>Built for AI developers & deployers in Colorado</li>
@@ -116,7 +115,7 @@ function MainLandingPage() {
               >
                 Book intro
               </a>
-              <Link className="btn btn-ghost" to="/survey">Run readiness check</Link>
+              <Link className="btn btn-ghost" to="/survey">Risk Calculator</Link>
             </div>
           </div>
         </section>
