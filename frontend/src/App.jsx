@@ -30,21 +30,19 @@ function MainLandingPage() {
         <section className="hero">
           <div className="container hero-grid">
             <div>
-              <h1>Colorado AI Act compliance, minus the busywork</h1>
+              <h1>Colorado AI Act compliance made simple</h1>
               <p className="lead">
-                Clarynt produces the <strong>buyer‑ready evidence</strong> your customers and auditors ask for:
-                impact assessments, risk management documentation, and transparency disclosures—delivered in <strong>3 weeks</strong>,
-                using <strong>redacted or synthetic data</strong> (no production access required).
+                Get <strong>buyer-ready evidence</strong> in <strong>3 weeks</strong>: impact assessments, risk management docs, and transparency disclosures. No production access required.
               </p>
               <div className="cta-row">
-                <Link className="btn btn-primary" to="/survey">Risk Calculator</Link>
-                <Link className="btn btn-primary" to="/documentation">Generate Compliance Documentation</Link>
+                <Link className="btn btn-primary btn-lg" to="/survey">Risk Calculator</Link>
+                <Link className="btn btn-primary btn-lg" to="/documentation">Generate Compliance Documentation</Link>
               </div>
               <ul className="trust-bullets">
-                <li>Built for AI developers & deployers in Colorado</li>
-                <li>Map to Colorado AI Act compliance requirements</li>
-                <li>No production access • deletion on request</li>
-                <li><a href="/trust">Sub‑processors &amp; data handling</a></li>
+                <li>Built for AI developers and deployers in Colorado</li>
+                <li>Maps to Colorado AI Act requirements</li>
+                <li>No production access needed</li>
+                <li><a href="/trust">Sub-processors and data handling</a></li>
               </ul>
             </div>
           </div>
@@ -75,15 +73,15 @@ function MainLandingPage() {
             <div className="card-grid">
               <article className="card">
                 <h3>Impact Assessment</h3>
-                <p>Purpose, algorithmic discrimination analysis, known risks, and mitigation strategies—written for Colorado compliance.</p>
+                <p>Purpose, discrimination analysis, known risks, and mitigation strategies for Colorado compliance.</p>
               </article>
               <article className="card">
                 <h3>Risk Management Program</h3>
-                <p>Systems, vendors, retention, locations, and lawful basis—DPIA‑friendly.</p>
+                <p>Systems, vendors, retention, locations, and lawful basis. DPIA-friendly.</p>
               </article>
               <article className="card">
-                <h3>Disclosures &amp; Consumer Rights</h3>
-                <p>Transparency notices, consumer rights documentation, and appeals process mapped to CAIA requirements.</p>
+                <h3>Disclosures and Consumer Rights</h3>
+                <p>Transparency notices, consumer rights docs, and appeals process mapped to CAIA requirements.</p>
               </article>
             </div>
           </div>
@@ -94,9 +92,9 @@ function MainLandingPage() {
           <div className="container">
             <h2>How it works</h2>
             <ol className="steps">
-              <li><strong>Kickoff (15–25 min).</strong> Map systems &amp; vendors; agree scope.</li>
-              <li><strong>Draft &amp; review.</strong> We draft from redacted/synthetic inputs; you review inline.</li>
-              <li><strong>Hand‑off.</strong> Final docs + a 1‑page summary you can share with customers.</li>
+              <li><strong>Kickoff (15-25 min).</strong> Map systems and vendors, agree on scope.</li>
+              <li><strong>Draft and review.</strong> We draft from redacted inputs, you review inline.</li>
+              <li><strong>Hand-off.</strong> Final docs plus a 1-page summary to share with customers.</li>
             </ol>
           </div>
         </section>
@@ -106,7 +104,7 @@ function MainLandingPage() {
           <div className="container cta-box">
             <div>
               <h2>Hold a pilot slot this month</h2>
-              <p className="muted">Free 3‑week pilot for SMB AI teams. NDA + no production access required.</p>
+              <p className="muted">Free 3-week pilot for SMB AI teams. NDA available, no production access required.</p>
             </div>
             <div className="cta-actions">
               <a

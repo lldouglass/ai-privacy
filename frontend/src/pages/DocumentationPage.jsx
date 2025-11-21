@@ -205,12 +205,12 @@ export default function DocumentationPage() {
     const storedOutcome = sessionStorage.getItem('riskLevel');
     if (storedOutcome && outcomeData[storedOutcome]) {
       setOutcome(storedOutcome);
-      
+
       // Load saved answers and checklist if they exist
       const savedAnswers = sessionStorage.getItem('documentationAnswers');
       const savedChecklist = sessionStorage.getItem('documentationChecklist');
       const savedChecklistItems = sessionStorage.getItem('documentationChecklistItems');
-      
+
       if (savedAnswers) {
         setAnswers(JSON.parse(savedAnswers));
       }
@@ -219,16 +219,19 @@ export default function DocumentationPage() {
       }
       if (savedChecklistItems) {
         setChecklistItems(JSON.parse(savedChecklistItems));
-        // If we have saved items, we can assume we should show the result view
-        // provided we have generated doc content (or we might want to clear it?)
-        // But logic for showing result depends on if user has clicked generate.
-        // We won't auto-show result unless we persist the report too, which we don't seem to do in the original code (only answers).
       }
-    } else {
-      // No outcome found, redirect to survey
-      navigate('/survey');
     }
+    // If no outcome, we'll show the selection screen instead of redirecting
   }, [navigate]);
+
+  const handleOutcomeSelect = (selectedOutcome) => {
+    setOutcome(selectedOutcome);
+    sessionStorage.setItem('riskLevel', selectedOutcome);
+    // Reset any previous answers
+    setAnswers({});
+    setChecklist({});
+    setChecklistItems([]);
+  };
 
   // Save to sessionStorage whenever answers or checklist change
   useEffect(() => {
@@ -377,7 +380,169 @@ export default function DocumentationPage() {
   };
 
   if (!outcome) {
-    return <div>Loading...</div>;
+    // Show outcome selection screen
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(180deg, var(--bg) 0%, var(--bg-elev) 100%)',
+        padding: '2rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{
+          maxWidth: '800px',
+          width: '100%',
+          background: 'var(--panel)',
+          borderRadius: '16px',
+          border: '1px solid var(--border)',
+          padding: '3rem',
+          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)'
+        }}>
+          <h1 style={{
+            fontSize: '2rem',
+            fontWeight: '700',
+            color: 'var(--text)',
+            marginBottom: '0.5rem',
+            textAlign: 'center'
+          }}>
+            Generate Compliance Documentation
+          </h1>
+          <p style={{
+            fontSize: '1rem',
+            color: 'var(--muted)',
+            marginBottom: '2rem',
+            textAlign: 'center'
+          }}>
+            Select your classification to get started
+          </p>
+
+          <div style={{
+            display: 'grid',
+            gap: '1rem'
+          }}>
+            <button
+              onClick={() => handleOutcomeSelect('outcome7')}
+              style={{
+                padding: '1.25rem',
+                background: 'var(--bg-elev)',
+                border: '1px solid var(--border)',
+                borderRadius: '12px',
+                color: 'var(--text)',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.2s ease',
+                fontFamily: 'inherit'
+              }}
+            >
+              <div style={{ marginBottom: '0.25rem' }}>Developer of High-Risk AI System</div>
+              <div style={{ fontSize: '0.875rem', fontWeight: '400', color: 'var(--muted)' }}>
+                You build or create AI systems used in consequential decisions
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleOutcomeSelect('outcome8')}
+              style={{
+                padding: '1.25rem',
+                background: 'var(--bg-elev)',
+                border: '1px solid var(--border)',
+                borderRadius: '12px',
+                color: 'var(--text)',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.2s ease',
+                fontFamily: 'inherit'
+              }}
+            >
+              <div style={{ marginBottom: '0.25rem' }}>Deployer of High-Risk AI System</div>
+              <div style={{ fontSize: '0.875rem', fontWeight: '400', color: 'var(--muted)' }}>
+                You use AI systems to make or assist consequential decisions
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleOutcomeSelect('outcome9')}
+              style={{
+                padding: '1.25rem',
+                background: 'var(--bg-elev)',
+                border: '1px solid var(--border)',
+                borderRadius: '12px',
+                color: 'var(--text)',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.2s ease',
+                fontFamily: 'inherit'
+              }}
+            >
+              <div style={{ marginBottom: '0.25rem' }}>Both Developer and Deployer</div>
+              <div style={{ fontSize: '0.875rem', fontWeight: '400', color: 'var(--muted)' }}>
+                You both build and deploy high-risk AI systems
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleOutcomeSelect('outcome5')}
+              style={{
+                padding: '1.25rem',
+                background: 'var(--bg-elev)',
+                border: '1px solid var(--border)',
+                borderRadius: '12px',
+                color: 'var(--text)',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.2s ease',
+                fontFamily: 'inherit'
+              }}
+            >
+              <div style={{ marginBottom: '0.25rem' }}>General AI System with Disclosure Duty</div>
+              <div style={{ fontSize: '0.875rem', fontWeight: '400', color: 'var(--muted)' }}>
+                Consumer-facing AI that requires transparency disclosures
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleOutcomeSelect('outcome2')}
+              style={{
+                padding: '1.25rem',
+                background: 'var(--bg-elev)',
+                border: '1px solid var(--border)',
+                borderRadius: '12px',
+                color: 'var(--text)',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.2s ease',
+                fontFamily: 'inherit'
+              }}
+            >
+              <div style={{ marginBottom: '0.25rem' }}>Exempt Deployer</div>
+              <div style={{ fontSize: '0.875rem', fontWeight: '400', color: 'var(--muted)' }}>
+                Deployer with reduced obligations under CAIA
+              </div>
+            </button>
+          </div>
+
+          <p style={{
+            fontSize: '0.875rem',
+            color: 'var(--muted)',
+            marginTop: '2rem',
+            textAlign: 'center'
+          }}>
+            Not sure? <a href="/survey" style={{ color: 'var(--primary)' }}>Take the Risk Calculator</a> to determine your classification.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   const data = outcomeData[outcome];
