@@ -45,6 +45,7 @@ a:hover{color:#fff}
 .btn-ghost:hover{border-color:var(--primary);color:#fff}
 .btn-primary{background:linear-gradient(90deg,var(--primary-700),var(--primary));border-color:transparent;color:#fff;box-shadow:0 10px 22px rgba(79,70,229,.25)}
 .btn-primary:hover{filter:brightness(1.05)}
+.btn-lg{padding:16px 28px;font-size:1.1rem;border-radius:12px}
 
 /* HERO */
 .hero{padding:56px 0;border-bottom:1px solid var(--border)}
