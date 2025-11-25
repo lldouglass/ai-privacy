@@ -1,5 +1,15 @@
 import React from "react";
 import { Routes, Route, Link } from "react-router-dom";
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import SpeedIcon from '@mui/icons-material/Speed';
+import GavelIcon from '@mui/icons-material/Gavel';
+import DescriptionIcon from '@mui/icons-material/Description';
+import HandshakeIcon from '@mui/icons-material/Handshake';
+import ShieldIcon from '@mui/icons-material/Shield';
+import UpdateIcon from '@mui/icons-material/Update';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import SecurityIcon from '@mui/icons-material/Security';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import "./styles.css";
 import SurveyPage from "./pages/SurveyPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
@@ -28,22 +38,32 @@ function MainLandingPage() {
       <main>
         {/* HERO */}
         <section className="hero">
-          <div className="container hero-grid">
-            <div>
-              <h1>Colorado AI Act compliance made simple</h1>
-              <p className="lead">
-                Get <strong>buyer-ready evidence</strong> in <strong>3 weeks</strong>: impact assessments, risk management docs, and transparency disclosures. No production access required.
-              </p>
-              <div className="cta-row">
-                <Link className="btn btn-primary btn-lg" to="/survey">Risk Calculator</Link>
-                <Link className="btn btn-primary btn-lg" to="/documentation">Generate Compliance Documentation</Link>
+          <div className="container hero-centered">
+            <h1 className="text-center">
+              <span className="text-gradient">Colorado AI Act Compliance</span>, Simplified.
+            </h1>
+            <p className="lead text-center">
+              Generate buyer-ready evidence in <strong>3 weeks</strong>. Impact assessments, risk docs, and transparency disclosures—without touching production.
+            </p>
+
+            <div className="cta-row">
+              <Link className="btn btn-primary btn-lg" to="/survey">Risk Calculator</Link>
+              <Link className="btn btn-primary btn-lg" to="/documentation">Generate Compliance Documentation</Link>
+            </div>
+
+            <div className="trust-badges-row">
+              <div className="trust-badge">
+                <GavelIcon /> Built for Colorado
               </div>
-              <ul className="trust-bullets">
-                <li>Built for AI developers and deployers in Colorado</li>
-                <li>Maps to Colorado AI Act requirements</li>
-                <li>No production access needed</li>
-                <li><a href="/trust">Sub-processors and data handling</a></li>
-              </ul>
+              <div className="trust-badge">
+                <VerifiedUserIcon /> No Prod Access
+              </div>
+              <div className="trust-badge">
+                <DescriptionIcon /> Sub-processors Mapped
+              </div>
+              <div className="trust-badge">
+                <SpeedIcon /> Deal Unblocker
+              </div>
             </div>
           </div>
         </section>
@@ -51,15 +71,24 @@ function MainLandingPage() {
         {/* VALUE PROPS */}
         <section className="section">
           <div className="container card-grid">
-            <article className="card">
+            <article className="card text-center">
+              <div className="feature-icon-wrapper">
+                <HandshakeIcon />
+              </div>
               <h3>Unblock deals</h3>
               <p>Answer security & compliance questionnaires with a concise, shareable evidence pack.</p>
             </article>
-            <article className="card">
+            <article className="card text-center">
+              <div className="feature-icon-wrapper">
+                <ShieldIcon />
+              </div>
               <h3>Reduce risk</h3>
               <p>Impact assessments and risk management programs aligned to Colorado AI Act requirements.</p>
             </article>
-            <article className="card">
+            <article className="card text-center">
+              <div className="feature-icon-wrapper">
+                <UpdateIcon />
+              </div>
               <h3>Stay current</h3>
               <p>Simple templates you can maintain as your models, vendors, or configs change.</p>
             </article>
@@ -69,17 +98,26 @@ function MainLandingPage() {
         {/* WHAT YOU GET */}
         <section id="evidence" className="section">
           <div className="container">
-            <h2>What you get</h2>
+            <h2 className="text-center">What you get</h2>
             <div className="card-grid">
-              <article className="card">
+              <article className="card text-center">
+                <div className="feature-icon-wrapper">
+                  <AssessmentIcon />
+                </div>
                 <h3>Impact Assessment</h3>
                 <p>Purpose, discrimination analysis, known risks, and mitigation strategies for Colorado compliance.</p>
               </article>
-              <article className="card">
+              <article className="card text-center">
+                <div className="feature-icon-wrapper">
+                  <SecurityIcon />
+                </div>
                 <h3>Risk Management Program</h3>
                 <p>Systems, vendors, retention, locations, and lawful basis. DPIA-friendly.</p>
               </article>
-              <article className="card">
+              <article className="card text-center">
+                <div className="feature-icon-wrapper">
+                  <VisibilityIcon />
+                </div>
                 <h3>Disclosures and Consumer Rights</h3>
                 <p>Transparency notices, consumer rights docs, and appeals process mapped to CAIA requirements.</p>
               </article>
@@ -90,12 +128,24 @@ function MainLandingPage() {
         {/* HOW IT WORKS */}
         <section id="how" className="section alt">
           <div className="container">
-            <h2>How it works</h2>
-            <ol className="steps">
-              <li><strong>Kickoff (15-25 min).</strong> Map systems and vendors, agree on scope.</li>
-              <li><strong>Draft and review.</strong> We draft from redacted inputs, you review inline.</li>
-              <li><strong>Hand-off.</strong> Final docs plus a 1-page summary to share with customers.</li>
-            </ol>
+            <h2 className="text-center">How it works</h2>
+            <div className="steps-grid">
+              <div className="step-card">
+                <div className="step-number">1</div>
+                <h3>Kickoff</h3>
+                <p>Map systems and vendors, agree on scope. (15-25 min)</p>
+              </div>
+              <div className="step-card">
+                <div className="step-number">2</div>
+                <h3>Draft and review</h3>
+                <p>We draft from redacted inputs, you review inline.</p>
+              </div>
+              <div className="step-card">
+                <div className="step-number">3</div>
+                <h3>Hand-off</h3>
+                <p>Final docs plus a 1-page summary to share with customers.</p>
+              </div>
+            </div>
           </div>
         </section>
 
