@@ -28,7 +28,7 @@ export default function ComplianceChatbot({ userContext }) {
         content: `Hi! I'm your Colorado AI Act compliance assistant. I can help you understand SB 24-205 requirements specific to your classification: **${getOutcomeTitle(userContext?.outcome)}**.\n\nAsk me anything about your obligations!`,
       },
     ]);
-  }, [userContext]);
+  }, [userContext?.outcome]);
 
   const getOutcomeTitle = (outcome) => {
     const titles = {
