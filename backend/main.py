@@ -879,11 +879,9 @@ DOCUMENT STRUCTURE:
 7. Contact Information - How to get more information or file appeals
 8. Additional Information - Where to find more details
 
-FORMAT OPTIONS:
-Provide 3 versions:
-- Full Notice (for written communications)
-- Short Notice (for in-app or web interfaces)
-- Verbal Script (for phone or in-person interactions)
+FORMAT INSTRUCTION:
+Analyze the USER'S SYSTEM DETAILS to determine the primary interaction mode (e.g., website, mobile app, phone, in-person).
+Generate ONLY the single most appropriate notice format for that specific mode.
 
 CRITICAL INSTRUCTIONS:
 - Generate actual notice templates, not instructions
@@ -943,14 +941,9 @@ DOCUMENT STRUCTURE:
 9. Timeline - How long the appeal process takes
 10. Contact Information - Who to contact for appeals
 
-FORMAT OPTIONS:
-Provide templates for common adverse decisions:
-- Loan/Credit Denial
-- Employment Application Rejection
-- Housing Application Denial
-- Insurance Coverage Denial or Pricing
-- Educational Opportunity Denial
-- Healthcare Treatment/Coverage Decision
+FORMAT INSTRUCTION:
+Analyze the USER'S SYSTEM DETAILS to determine the specific type of adverse decision being made.
+Generate ONLY the single adverse action notice relevant to that specific decision type (e.g., "loan denial", "employment rejection", "housing application", etc).
 
 CRITICAL INSTRUCTIONS:
 - Generate actual notice templates that can be customized
@@ -994,12 +987,9 @@ USER'S SYSTEM DETAILS:
 TASK:
 Generate "AI Interaction Disclosure Notices" for various contexts.
 
-DOCUMENT STRUCTURE (provide multiple format options):
-1. Website/App Chatbot Disclosure
-2. Phone System Disclosure
-3. Email/Messaging Disclosure
-4. In-Person Kiosk/Interface Disclosure
-5. General AI Interaction Banner
+DOCUMENT STRUCTURE:
+Analyze the USER'S SYSTEM DETAILS to determine the specific interaction channel (e.g., chatbot, phone, email).
+Generate ONLY the single disclosure notice appropriate for that specific channel.
 
 Each notice should:
 - Clearly state that user is interacting with AI
@@ -1007,12 +997,8 @@ Each notice should:
 - Be immediately visible/audible
 - Use plain language
 
-EXAMPLES TO PROVIDE:
-- Chat widget popup message
-- Phone system greeting
-- Email signature disclosure
-- Mobile app banner
-- Website header notice
+FORMATTING:
+Ensure the notice format matches the identified channel (e.g., short text for chatbot, script for phone, etc).
 
 CRITICAL INSTRUCTIONS:
 - Generate actual disclosure text, not instructions
@@ -1055,24 +1041,9 @@ USER'S SYSTEM DETAILS:
 TASK:
 Generate "Synthetic Content Disclosure Notices" for various media types.
 
-DOCUMENT STRUCTURE (provide format options for each media type):
-1. Image/Photo Disclosures
-   - Watermark text options
-   - Caption text options
-   - Metadata tags
-2. Video Content Disclosures
-   - Opening/closing slate text
-   - Overlay text options
-   - Description field text
-3. Audio Content Disclosures
-   - Verbal disclosure scripts
-   - Audio description text
-4. Text Content Disclosures
-   - Article disclaimers
-   - Email/message disclosures
-5. Mixed Media Disclosures
-   - Social media post templates
-   - Website content disclaimers
+DOCUMENT STRUCTURE:
+Analyze the USER'S SYSTEM DETAILS to determine the specific type of synthetic content (e.g., image, video, audio, text).
+Generate ONLY the single disclosure set appropriate for that specific content type.
 
 Each disclosure should:
 - Clearly state content is AI-generated
@@ -1083,7 +1054,7 @@ Each disclosure should:
 CRITICAL INSTRUCTIONS:
 - Generate actual disclosure text and placement guidance
 - Output MUST be in proper markdown format with appropriate headers, lists, and formatting
-- Provide both short and detailed versions for each type
+- Provide both short and detailed versions for the identified type
 - Include visual placement recommendations (e.g., "Top-left watermark", "Opening 5 seconds")
 - Use the organization's specific details from the user's answers
 - For missing information, use: [PLACEHOLDER: content type]
