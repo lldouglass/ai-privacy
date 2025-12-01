@@ -7,19 +7,6 @@ export default function HomePage() {
   return (
     <>
       {/* Top nav */}
-      <header className="nav">
-        <div className="container nav-row">
-          <Link className="brand" to="/">Clarynt</Link>
-          <nav className="nav-links">
-            <a href="#how">How it works</a>
-            <a href="#evidence">Evidence pack</a>
-            <a href="/trust">Trust</a>
-            <Link to="/demo">Demo</Link>
-            <a className="btn btn-primary" href="#cta">Book intro</a>
-          </nav>
-        </div>
-      </header>
-
       <main>
         {/* HERO */}
         <section className="hero">

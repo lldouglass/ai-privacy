@@ -15,7 +15,9 @@ import SurveyPage from "./pages/SurveyPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import DemoPage from "./pages/DemoPage.jsx";
 import SharePage from "./pages/SharePage.jsx";
+
 import DocumentationPage from "./pages/DocumentationPage.jsx";
+import Navbar from "./components/Navbar.jsx";
 
 function MainLandingPage() {
   const year = new Date().getFullYear();
@@ -23,18 +25,6 @@ function MainLandingPage() {
   return (
     <>
       {/* Top nav */}
-      <header className="nav">
-        <div className="container nav-row">
-          <Link className="brand" to="/">Clarynt</Link>
-          <nav className="nav-links">
-            <a href="#how">How it works</a>
-            <a href="#evidence">Evidence pack</a>
-            <a href="/trust">Trust</a>
-            <a className="btn btn-primary" href="#cta">Book intro</a>
-          </nav>
-        </div>
-      </header>
-
       <main>
         {/* HERO */}
         <section className="hero">
@@ -190,13 +180,16 @@ function MainLandingPage() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<MainLandingPage />} />
-      <Route path="/survey" element={<SurveyPage />} />
-      <Route path="/checkup" element={<HomePage />} />
-      <Route path="/demo" element={<DemoPage />} />
-      <Route path="/documentation" element={<DocumentationPage />} />
-      <Route path="/share/:shareId" element={<SharePage />} />
-    </Routes>
+    <>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<MainLandingPage />} />
+        <Route path="/survey" element={<SurveyPage />} />
+        <Route path="/checkup" element={<HomePage />} />
+        <Route path="/demo" element={<DemoPage />} />
+        <Route path="/documentation" element={<DocumentationPage />} />
+        <Route path="/share/:shareId" element={<SharePage />} />
+      </Routes>
+    </>
   );
 }
