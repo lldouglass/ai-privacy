@@ -249,56 +249,6 @@ export default function SurveyPage() {
     setShowResults(false);
   };
 
-  const handleDownloadDocuments = async () => {
-    try {
-      const classification = getRiskClassification();
-      const allAnswers = { ...answers, ...currentStepAnswers };
-
-      const response = await fetch('/api/generate-survey-documents', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          answers: allAnswers,
-          classification: classification
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate documents');
-      }
-
-      const data = await response.json();
-
-      // Create a zip-like download by combining all documents into one markdown file
-      let combinedMarkdown = '# Colorado AI Act Compliance Documents\n\n';
-      combinedMarkdown += `Generated: ${new Date().toLocaleDateString()}\n\n`;
-      combinedMarkdown += `**Classification:** ${classification.title}\n\n`;
-      combinedMarkdown += '---\n\n';
-
-      Object.entries(data.documents).forEach(([key, content]) => {
-        combinedMarkdown += `\n\n${content}\n\n---\n\n`;
-      });
-
-      // Create download
-      const blob = new Blob([combinedMarkdown], { type: 'text/markdown' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `caia-compliance-documents-${new Date().toISOString().split('T')[0]}.md`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      alert(`Successfully generated ${data.document_count} compliance documents!`);
-    } catch (error) {
-      console.error('Error generating documents:', error);
-      alert('Failed to generate documents. Please try again or contact support.');
-    }
-  };
-
   const handleGenerateDocumentation = () => {
     const classification = getRiskClassification();
     const allAnswers = { ...answers, ...currentStepAnswers };
@@ -510,25 +460,6 @@ export default function SurveyPage() {
             gap: '1rem',
             flexWrap: 'wrap'
           }}>
-            <button
-              onClick={handleDownloadDocuments}
-              style={{
-                flex: '1',
-                minWidth: '200px',
-                padding: '1rem 2rem',
-                background: `linear-gradient(90deg, ${classification.color}, ${classification.color}dd)`,
-                border: 'none',
-                borderRadius: '10px',
-                color: '#fff',
-                fontSize: '1.125rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                fontFamily: 'inherit'
-              }}
-            >
-              Download Documents
-            </button>
-
             <button
               onClick={handleGenerateDocumentation}
               style={{
