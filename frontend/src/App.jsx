@@ -47,8 +47,8 @@ function MainLandingPage() {
             </p>
 
             <div className="cta-row">
-              <Link className="btn btn-primary btn-lg" to="/survey">Risk Calculator</Link>
-              <Link className="btn btn-primary btn-lg" to="/documentation">Generate Compliance Documentation</Link>
+              <Link className="btn btn-primary btn-lg" to="/documentation">Get Started</Link>
+              <Link className="btn btn-ghost btn-lg" to="/survey">Risk Calculator</Link>
             </div>
 
             <div className="trust-badges-row">

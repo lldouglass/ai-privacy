@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 
-export default function ComplianceChatbot({ userContext }) {
+export default function ComplianceChatbot({ userContext, questions, currentAnswers, onSuggestAnswer }) {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
+  const [activeQuestionId, setActiveQuestionId] = useState(null);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -16,16 +17,16 @@ export default function ComplianceChatbot({ userContext }) {
     scrollToBottom();
   }, [messages]);
 
-  // Initial suggested questions
+  // Initial setup
   useEffect(() => {
-    const initialQuestions = getInitialSuggestions(userContext?.outcome);
-    setSuggestedQuestions(initialQuestions);
+    const initialSuggestions = getInitialSuggestions(userContext?.outcome, questions);
+    setSuggestedQuestions(initialSuggestions);
 
     // Welcome message
     setMessages([
       {
         role: "assistant",
-        content: `Hi! I'm your Colorado AI Act compliance assistant. I can help you understand SB 24-205 requirements specific to your classification: **${getOutcomeTitle(userContext?.outcome)}**.\n\nAsk me anything about your obligations!`,
+        content: `Hi! I'm your documentation assistant. I'll help you answer the compliance questions for **${getOutcomeTitle(userContext?.outcome)}**.\n\nTell me about your AI system and I'll help draft answers, or click on any question below to get specific guidance.`,
       },
     ]);
   }, [userContext?.outcome]);
@@ -45,7 +46,17 @@ export default function ComplianceChatbot({ userContext }) {
     return titles[outcome] || "Unknown Classification";
   };
 
-  const getInitialSuggestions = (outcome) => {
+  const getInitialSuggestions = (outcome, questionsList) => {
+    // If we have questions, suggest help with specific ones
+    if (questionsList && questionsList.length > 0) {
+      return [
+        "Describe your AI system so I can help draft answers",
+        `Help me with Question 1: ${questionsList[0]?.text?.substring(0, 50)}...`,
+        "What information do I need to gather?",
+      ];
+    }
+
+    // Fallback general suggestions
     if (outcome === "outcome7" || outcome === "outcome9") {
       return [
         "What documentation must I provide to deployers?",
@@ -67,7 +78,7 @@ export default function ComplianceChatbot({ userContext }) {
     }
   };
 
-  const sendMessage = async (message) => {
+  const sendMessage = async (message, questionContext = null) => {
     if (!message.trim()) return;
 
     // Add user message
@@ -77,15 +88,22 @@ export default function ComplianceChatbot({ userContext }) {
     setIsLoading(true);
 
     try {
-      const response = await axios.post("/api/chat/compliance-assistant", {
+      const response = await axios.post("/api/chat/documentation-helper", {
         message,
-        context: userContext,
+        context: {
+          ...userContext,
+          questions: questions,
+          currentAnswers: currentAnswers,
+          activeQuestionId: questionContext || activeQuestionId,
+        },
       });
 
       // Add assistant response
       const assistantMessage = {
         role: "assistant",
         content: response.data.message,
+        suggestedAnswer: response.data.suggested_answer,
+        forQuestionId: response.data.for_question_id,
         citations: response.data.citations || [],
       };
       setMessages((prev) => [...prev, assistantMessage]);
@@ -96,15 +114,55 @@ export default function ComplianceChatbot({ userContext }) {
       }
     } catch (error) {
       console.error("Chat error:", error);
-      const errorMessage = {
+      // Fallback to demo mode response
+      const demoResponse = generateDemoResponse(message, questions, userContext?.outcome);
+      const assistantMessage = {
         role: "assistant",
-        content:
-          "Sorry, I encountered an error. Please try again or rephrase your question.",
+        content: demoResponse.message,
+        suggestedAnswer: demoResponse.suggested_answer,
+        forQuestionId: demoResponse.for_question_id,
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Demo mode response generator
+  const generateDemoResponse = (message, questionsList, outcome) => {
+    const msgLower = message.toLowerCase();
+
+    // Check if asking about a specific question
+    const questionMatch = msgLower.match(/question (\d+)/);
+    if (questionMatch && questionsList) {
+      const qNum = parseInt(questionMatch[1]) - 1;
+      if (qNum >= 0 && qNum < questionsList.length) {
+        const q = questionsList[qNum];
+        return {
+          message: `**Question ${qNum + 1}:** "${q.text}"\n\n**Guidance:** This question is asking about your organization's specific practices. Consider:\n\n• Be specific and concrete\n• Include names, titles, or departments where applicable\n• Reference any existing policies or procedures\n• If you don't have a formal process, describe what you plan to implement\n\nWould you like me to help draft an answer? Just describe your current approach.`,
+          for_question_id: q.id,
+        };
+      }
+    }
+
+    // Check if describing an AI system
+    if (msgLower.includes("ai") || msgLower.includes("system") || msgLower.includes("we use") || msgLower.includes("our")) {
+      let suggestedAnswers = {};
+
+      // Try to extract info for Q1 and Q2 based on description
+      if (questionsList && questionsList.length >= 2) {
+        suggestedAnswers = {
+          message: `Based on your description, I can help draft some answers:\n\n**For Question 1 (Purpose/Uses):**\nI'll need to know:\n• What decisions does the AI help make?\n• Who are the intended users?\n• Are there any uses you want to explicitly prohibit?\n\n**For Question 2 (Specific Purpose & Outputs):**\n• What outputs does the system produce (scores, classifications, recommendations)?\n• What benefits do you expect from using this system?\n\nTell me more about these aspects and I'll draft specific language.`,
+        };
+      }
+
+      return suggestedAnswers;
+    }
+
+    // General help
+    return {
+      message: `I can help you fill out the compliance documentation. Here's what I can do:\n\n• **Describe your AI system** - Tell me what it does and I'll help draft answers\n• **Ask about a specific question** - Say "help with question 3" and I'll explain what's needed\n• **Get guidance** - Ask about Colorado AI Act requirements\n\nWhat would you like help with?`,
+    };
   };
 
   const handleSend = () => {
@@ -113,6 +171,24 @@ export default function ComplianceChatbot({ userContext }) {
 
   const handleSuggestedClick = (question) => {
     sendMessage(question);
+  };
+
+  const handleQuestionClick = (questionId, questionIndex) => {
+    setActiveQuestionId(questionId);
+    sendMessage(`Help me with Question ${questionIndex + 1}`, questionId);
+  };
+
+  const handleUseAnswer = (answer, questionId) => {
+    if (onSuggestAnswer && questionId) {
+      onSuggestAnswer(questionId, answer);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "I've added the suggested answer to the form. Feel free to edit it to better match your specific situation.",
+        },
+      ]);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -137,7 +213,7 @@ export default function ComplianceChatbot({ userContext }) {
       {/* Header */}
       <div
         style={{
-          padding: "1.5rem",
+          padding: "1rem 1.5rem",
           borderBottom: "1px solid var(--border)",
           background: "var(--bg-elev)",
         }}
@@ -147,19 +223,19 @@ export default function ComplianceChatbot({ userContext }) {
             display: "flex",
             alignItems: "center",
             gap: "0.5rem",
-            marginBottom: "0.5rem",
+            marginBottom: "0.25rem",
           }}
         >
-          <span style={{ fontSize: "1.5rem" }}>💬</span>
+          <span style={{ fontSize: "1.25rem" }}>🤖</span>
           <h3
             style={{
-              fontSize: "1.125rem",
+              fontSize: "1rem",
               fontWeight: "700",
               color: "var(--text)",
               margin: 0,
             }}
           >
-            AI Compliance Assistant
+            Documentation Assistant
           </h3>
         </div>
         <p
@@ -169,19 +245,62 @@ export default function ComplianceChatbot({ userContext }) {
             margin: 0,
           }}
         >
-          Ask me about SB 24-205 requirements
+          Describe your AI system and I'll help fill out the questions
         </p>
       </div>
+
+      {/* Question shortcuts - show if questions exist */}
+      {questions && questions.length > 0 && (
+        <div
+          style={{
+            padding: "0.75rem 1rem",
+            borderBottom: "1px solid var(--border)",
+            background: "var(--bg)",
+            overflowX: "auto",
+            whiteSpace: "nowrap",
+          }}
+        >
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            {questions.slice(0, 6).map((q, idx) => (
+              <button
+                key={q.id}
+                onClick={() => handleQuestionClick(q.id, idx)}
+                disabled={isLoading}
+                style={{
+                  padding: "0.375rem 0.75rem",
+                  background: activeQuestionId === q.id ? "var(--primary)" : "var(--panel)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "16px",
+                  color: activeQuestionId === q.id ? "#fff" : "var(--text)",
+                  fontSize: "0.75rem",
+                  fontWeight: "500",
+                  cursor: isLoading ? "not-allowed" : "pointer",
+                  transition: "all 0.2s ease",
+                  fontFamily: "inherit",
+                  flexShrink: 0,
+                }}
+              >
+                Q{idx + 1}
+              </button>
+            ))}
+            {questions.length > 6 && (
+              <span style={{ fontSize: "0.75rem", color: "var(--muted)", padding: "0.375rem" }}>
+                +{questions.length - 6} more
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div
         style={{
           flex: 1,
           overflowY: "auto",
-          padding: "1.5rem",
+          padding: "1rem",
           display: "flex",
           flexDirection: "column",
-          gap: "1rem",
+          gap: "0.75rem",
         }}
       >
         {messages.map((msg, idx) => (
@@ -195,7 +314,7 @@ export default function ComplianceChatbot({ userContext }) {
           >
             <div
               style={{
-                maxWidth: "85%",
+                maxWidth: "90%",
                 padding: "0.75rem 1rem",
                 borderRadius: "12px",
                 background:
@@ -209,13 +328,55 @@ export default function ComplianceChatbot({ userContext }) {
               }}
             >
               {msg.content}
+
+              {/* Show "Use this answer" button if there's a suggested answer */}
+              {msg.suggestedAnswer && msg.forQuestionId && (
+                <div
+                  style={{
+                    marginTop: "0.75rem",
+                    paddingTop: "0.75rem",
+                    borderTop: "1px solid var(--border)",
+                  }}
+                >
+                  <div
+                    style={{
+                      background: "var(--panel)",
+                      padding: "0.75rem",
+                      borderRadius: "8px",
+                      marginBottom: "0.5rem",
+                      fontSize: "0.8rem",
+                      color: "var(--text)",
+                    }}
+                  >
+                    <strong>Suggested answer:</strong>
+                    <div style={{ marginTop: "0.5rem" }}>{msg.suggestedAnswer}</div>
+                  </div>
+                  <button
+                    onClick={() => handleUseAnswer(msg.suggestedAnswer, msg.forQuestionId)}
+                    style={{
+                      padding: "0.5rem 1rem",
+                      background: "var(--ok)",
+                      border: "none",
+                      borderRadius: "6px",
+                      color: "#fff",
+                      fontSize: "0.75rem",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    Use this answer
+                  </button>
+                </div>
+              )}
+
               {msg.citations && msg.citations.length > 0 && (
                 <div
                   style={{
                     marginTop: "0.5rem",
                     paddingTop: "0.5rem",
                     borderTop: "1px solid rgba(255,255,255,0.1)",
-                    fontSize: "0.75rem",
+                    fontSize: "0.7rem",
                     opacity: 0.8,
                   }}
                 >
@@ -250,25 +411,26 @@ export default function ComplianceChatbot({ userContext }) {
       </div>
 
       {/* Suggested Questions */}
-      {suggestedQuestions.length > 0 && messages.length <= 1 && (
+      {suggestedQuestions.length > 0 && messages.length <= 2 && (
         <div
           style={{
-            padding: "0 1.5rem 1rem 1.5rem",
+            padding: "0.5rem 1rem",
             display: "flex",
             flexDirection: "column",
-            gap: "0.5rem",
+            gap: "0.375rem",
+            borderTop: "1px solid var(--border)",
           }}
         >
           <p
             style={{
-              fontSize: "0.75rem",
+              fontSize: "0.7rem",
               color: "var(--muted)",
               margin: 0,
             }}
           >
-            Suggested questions:
+            Try:
           </p>
-          {suggestedQuestions.map((question, idx) => (
+          {suggestedQuestions.slice(0, 3).map((question, idx) => (
             <button
               key={idx}
               onClick={() => handleSuggestedClick(question)}
@@ -305,7 +467,7 @@ export default function ComplianceChatbot({ userContext }) {
       {/* Input */}
       <div
         style={{
-          padding: "1rem 1.5rem",
+          padding: "0.75rem 1rem",
           borderTop: "1px solid var(--border)",
           background: "var(--bg-elev)",
         }}
@@ -315,12 +477,12 @@ export default function ComplianceChatbot({ userContext }) {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask about your compliance obligations..."
+            placeholder="Describe your AI system or ask for help..."
             disabled={isLoading}
             rows={2}
             style={{
               flex: 1,
-              padding: "0.75rem",
+              padding: "0.625rem",
               background: "var(--panel)",
               border: "1px solid var(--border)",
               borderRadius: "8px",
@@ -334,7 +496,7 @@ export default function ComplianceChatbot({ userContext }) {
             onClick={handleSend}
             disabled={isLoading || !inputValue.trim()}
             style={{
-              padding: "0.75rem 1.5rem",
+              padding: "0.625rem 1rem",
               background:
                 isLoading || !inputValue.trim()
                   ? "var(--border)"

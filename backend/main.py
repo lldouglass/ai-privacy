@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, UploadFile, Form, Request
 from outreach import router as outreach_router
+from intake import router as intake_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -59,6 +60,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(outreach_router)
+app.include_router(intake_router)
 
 @app.on_event("startup")
 async def startup():

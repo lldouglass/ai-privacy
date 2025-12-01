@@ -1084,6 +1084,11 @@ export default function DocumentationPage() {
               answers: answers,
               checklist: checklist
             }}
+            questions={data.questions}
+            currentAnswers={answers}
+            onSuggestAnswer={(questionId, answer) => {
+              setAnswers(prev => ({ ...prev, [questionId]: answer }));
+            }}
           />
         </div>
       </div>
