@@ -1,23 +1,11 @@
 import React from "react";
 import { Routes, Route, Link } from "react-router-dom";
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import SpeedIcon from '@mui/icons-material/Speed';
-import GavelIcon from '@mui/icons-material/Gavel';
-import DescriptionIcon from '@mui/icons-material/Description';
-import HandshakeIcon from '@mui/icons-material/Handshake';
-import ShieldIcon from '@mui/icons-material/Shield';
-import UpdateIcon from '@mui/icons-material/Update';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import SecurityIcon from '@mui/icons-material/Security';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import "./styles.css";
 import SurveyPage from "./pages/SurveyPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import DemoPage from "./pages/DemoPage.jsx";
 import SharePage from "./pages/SharePage.jsx";
-
 import DocumentationPage from "./pages/DocumentationPage.jsx";
-import Navbar from "./components/Navbar.jsx";
 
 function MainLandingPage() {
   const year = new Date().getFullYear();
@@ -25,35 +13,36 @@ function MainLandingPage() {
   return (
     <>
       {/* Top nav */}
+      <header className="nav">
+        <div className="container nav-row">
+          <Link className="brand" to="/">Clarynt</Link>
+          <nav className="nav-links">
+            <a href="#how">How it works</a>
+            <a href="#evidence">Evidence pack</a>
+            <a href="/trust">Trust</a>
+            <a className="btn btn-primary" href="#cta">Book intro</a>
+          </nav>
+        </div>
+      </header>
+
       <main>
         {/* HERO */}
         <section className="hero">
-          <div className="container hero-centered">
-            <h1 className="text-center">
-              <span className="text-gradient">Colorado AI Act Compliance</span>, Simplified.
-            </h1>
-            <p className="lead text-center">
-              Generate buyer-ready evidence in <strong>3 weeks</strong>. Impact assessments, risk docs, and transparency disclosures—without touching production.
-            </p>
-
-            <div className="cta-row">
-              <Link className="btn btn-primary btn-lg" to="/documentation">Get Started</Link>
-              <Link className="btn btn-ghost btn-lg" to="/survey">Risk Calculator</Link>
-            </div>
-
-            <div className="trust-badges-row">
-              <div className="trust-badge">
-                <GavelIcon /> Built for Colorado
+          <div className="container hero-grid">
+            <div>
+              <h1>Colorado AI Act Compliance Tools</h1>
+              <p className="lead">
+                Determine your obligations under the Colorado AI Act and generate the documentation you need: impact assessments, risk management programs, and disclosure notices.
+              </p>
+              <div className="cta-row">
+                <Link className="btn btn-primary btn-lg" to="/survey">Risk Calculator</Link>
+                <Link className="btn btn-primary btn-lg" to="/documentation">Generate Documentation</Link>
               </div>
-              <div className="trust-badge">
-                <VerifiedUserIcon /> No Prod Access
-              </div>
-              <div className="trust-badge">
-                <DescriptionIcon /> Sub-processors Mapped
-              </div>
-              <div className="trust-badge">
-                <SpeedIcon /> Deal Unblocker
-              </div>
+              <ul className="trust-bullets">
+                <li>Identify if you are a developer, deployer, or both</li>
+                <li>Generate CAIA-compliant documentation</li>
+                <li>AI assistant to answer compliance questions</li>
+              </ul>
             </div>
           </div>
         </section>
@@ -61,26 +50,17 @@ function MainLandingPage() {
         {/* VALUE PROPS */}
         <section className="section">
           <div className="container card-grid">
-            <article className="card text-center">
-              <div className="feature-icon-wrapper">
-                <HandshakeIcon />
-              </div>
-              <h3>Unblock deals</h3>
-              <p>Answer security & compliance questionnaires with a concise, shareable evidence pack.</p>
+            <article className="card">
+              <h3>Risk Calculator</h3>
+              <p>Answer questions about your AI system to determine your classification and obligations under CAIA.</p>
             </article>
-            <article className="card text-center">
-              <div className="feature-icon-wrapper">
-                <ShieldIcon />
-              </div>
-              <h3>Reduce risk</h3>
-              <p>Impact assessments and risk management programs aligned to Colorado AI Act requirements.</p>
+            <article className="card">
+              <h3>Document Generator</h3>
+              <p>Generate impact assessments, risk management programs, and disclosure notices tailored to your role.</p>
             </article>
-            <article className="card text-center">
-              <div className="feature-icon-wrapper">
-                <UpdateIcon />
-              </div>
-              <h3>Stay current</h3>
-              <p>Simple templates you can maintain as your models, vendors, or configs change.</p>
+            <article className="card">
+              <h3>AI Assistant</h3>
+              <p>Get answers to your Colorado AI Act compliance questions from our AI chatbot.</p>
             </article>
           </div>
         </section>
@@ -88,28 +68,19 @@ function MainLandingPage() {
         {/* WHAT YOU GET */}
         <section id="evidence" className="section">
           <div className="container">
-            <h2 className="text-center">What you get</h2>
+            <h2>Documentation Output</h2>
             <div className="card-grid">
-              <article className="card text-center">
-                <div className="feature-icon-wrapper">
-                  <AssessmentIcon />
-                </div>
+              <article className="card">
                 <h3>Impact Assessment</h3>
-                <p>Purpose, discrimination analysis, known risks, and mitigation strategies for Colorado compliance.</p>
+                <p>System purpose, discrimination analysis, known risks, and mitigation strategies.</p>
               </article>
-              <article className="card text-center">
-                <div className="feature-icon-wrapper">
-                  <SecurityIcon />
-                </div>
+              <article className="card">
                 <h3>Risk Management Program</h3>
-                <p>Systems, vendors, retention, locations, and lawful basis. DPIA-friendly.</p>
+                <p>Governance structure, monitoring procedures, and accountability measures.</p>
               </article>
-              <article className="card text-center">
-                <div className="feature-icon-wrapper">
-                  <VisibilityIcon />
-                </div>
-                <h3>Disclosures and Consumer Rights</h3>
-                <p>Transparency notices, consumer rights docs, and appeals process mapped to CAIA requirements.</p>
+              <article className="card">
+                <h3>Consumer Disclosures</h3>
+                <p>Transparency notices, consumer rights information, and appeals process documentation.</p>
               </article>
             </div>
           </div>
@@ -118,24 +89,12 @@ function MainLandingPage() {
         {/* HOW IT WORKS */}
         <section id="how" className="section alt">
           <div className="container">
-            <h2 className="text-center">How it works</h2>
-            <div className="steps-grid">
-              <div className="step-card">
-                <div className="step-number">1</div>
-                <h3>Kickoff</h3>
-                <p>Map systems and vendors, agree on scope. (15-25 min)</p>
-              </div>
-              <div className="step-card">
-                <div className="step-number">2</div>
-                <h3>Draft and review</h3>
-                <p>We draft from redacted inputs, you review inline.</p>
-              </div>
-              <div className="step-card">
-                <div className="step-number">3</div>
-                <h3>Hand-off</h3>
-                <p>Final docs plus a 1-page summary to share with customers.</p>
-              </div>
-            </div>
+            <h2>How it works</h2>
+            <ol className="steps">
+              <li><strong>Take the Risk Calculator.</strong> Answer questions about your AI system to determine your CAIA classification.</li>
+              <li><strong>Answer documentation questions.</strong> Provide details about your system, governance, and processes.</li>
+              <li><strong>Generate and download.</strong> Get your compliance documentation as an editable PDF.</li>
+            </ol>
           </div>
         </section>
 
@@ -143,17 +102,12 @@ function MainLandingPage() {
         <section id="cta" className="section">
           <div className="container cta-box">
             <div>
-              <h2>Hold a pilot slot this month</h2>
-              <p className="muted">Free 3-week pilot for SMB AI teams. NDA available, no production access required.</p>
+              <h2>Get started with compliance</h2>
+              <p className="muted">Free to use. Determine your obligations and generate documentation today.</p>
             </div>
             <div className="cta-actions">
-              <a
-                className="btn btn-primary"
-                href="mailto:logan42.ld@gmail.com?subject=Clarynt%20pilot%20intro&body=We%27d%20like%20to%20book%20a%2025-min%20intro.%20Our%20company%20is%20..."
-              >
-                Book intro
-              </a>
-              <Link className="btn btn-ghost" to="/survey">Risk Calculator</Link>
+              <Link className="btn btn-primary" to="/survey">Risk Calculator</Link>
+              <Link className="btn btn-ghost" to="/documentation">Generate Documentation</Link>
             </div>
           </div>
         </section>
@@ -180,16 +134,13 @@ function MainLandingPage() {
 
 export default function App() {
   return (
-    <>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<MainLandingPage />} />
-        <Route path="/survey" element={<SurveyPage />} />
-        <Route path="/checkup" element={<HomePage />} />
-        <Route path="/demo" element={<DemoPage />} />
-        <Route path="/documentation" element={<DocumentationPage />} />
-        <Route path="/share/:shareId" element={<SharePage />} />
-      </Routes>
-    </>
+    <Routes>
+      <Route path="/" element={<MainLandingPage />} />
+      <Route path="/survey" element={<SurveyPage />} />
+      <Route path="/checkup" element={<HomePage />} />
+      <Route path="/demo" element={<DemoPage />} />
+      <Route path="/documentation" element={<DocumentationPage />} />
+      <Route path="/share/:shareId" element={<SharePage />} />
+    </Routes>
   );
 }
