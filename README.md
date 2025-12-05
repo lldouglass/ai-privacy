@@ -1,6 +1,6 @@
 # AI Privacy & Compliance Web App
 
-AI compliance assessment tool for CAIA (California AI Accountability) regulations. Features compliance surveys, AI-powered documentation generation, RAG-based regulatory retrieval, and a compliance chatbot.
+AI compliance assessment tool for CAIA (Colorado AI Act) regulations. Features compliance surveys, AI-powered documentation generation, RAG-based regulatory retrieval, and a compliance chatbot.
 
 **Production:** https://app.clarynt.net
 
